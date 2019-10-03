@@ -47,6 +47,25 @@ def open_output_file(filename, **kwargs):
     return open(os.path.join(OUTPUT_DIR, filename), "w", **kwargs)
 
 
+def print_table(table, headers, outf_name, column_formats=None):
+    with open_output_file(outf_name) as outfile:
+        def my_print(s):
+            print(s, file=outfile)
+        my_print(r"\begin{tabular}{%s}" % column_formats)
+        my_print(r"\toprule")
+        if isinstance(headers[0], (list, tuple)):
+            for header_row in headers:
+                my_print(" & ".join(header_row) + r"\\")
+        else:
+            my_print(" & ".join(headers) + r"\\")
+        my_print(r"\midrule")
+        for row in table:
+            my_print(" & ".join(row) + r"\\")
+        my_print(r"\bottomrule")
+        my_print(r"\end{tabular}")
+    logger.info("Wrote %s", os.path.join(OUTPUT_DIR, outf_name))
+
+
 EXPERIMENTS = (
         "urchin-time-prediction",
     )
@@ -55,15 +74,74 @@ EXPERIMENTS = (
 def generate_urchin_time_prediction_table():
     with open_data_file("urchin-time-prediction-modeled-costs.json") as infile:
         modeled_costs = read_data(infile)
-        
+
     with open_data_file("urchin-time-prediction-actual-costs.json") as infile:
         actual_costs = read_data(infile)
+
+    assert len(modeled_costs) == len(actual_costs)
+    nresults = len(modeled_costs)
+    urchin_ks = sorted(cost["k"] for cost in modeled_costs)
+
+    headers = (
+            (
+                r"\multirow{2}{*}{Kind}",
+                r"\multicolumn{%d}{c}{Process Time (s)}" % nresults,
+                ),
+            (
+                r"\cmidrule(lr){2-%d}" % (1 + nresults),
+                ) + tuple(r"\cellcenter{\gamma_{%d}}" % k for k in urchin_ks))
+
+    rows = []
+
+    # {{{ actual costs row
+
+    row = ["Actual"]
+
+    for k in urchin_ks:
+        for field in actual_costs:
+            if field["k"] == k:
+                break
+        else:
+            raise ValueError("not found: %d" % k)
+
+        cost = field["cost"]
+        time = sum(
+                timing_result["process_elapsed"]
+                for timing_result in cost.values())
+
+        row.append("%.2f" % time)
+
+    rows.append(row)
+
+    # }}}
+
+    # {{{ modeled costs row
+
+    row = ["Model"]
+
+    for k in urchin_ks:
+        for field in modeled_costs:
+            if field["k"] == k:
+                break
+        else:
+            raise ValueError("not found: %d" % k)
+
+        cost = field["cost"]
+        time = sum(cost.get_predicted_times(True).values())
+        row.append("%.2f" % time)
+
+    rows.append(row)
+
+    # }}}
+
+    col_formats = "c" + nresults * "r"
+    print_table(rows, headers, "urchin-time-prediction.tex", col_formats)
 
 
 def gen_figures_and_tables(experiments):
     if "urchin-time-prediction" in experiments:
         generate_urchin_time_prediction_table()
-            
+
 
 def main():
     names = ["'%s'" % name for name in EXPERIMENTS]
