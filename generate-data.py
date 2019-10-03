@@ -36,7 +36,7 @@ FORCE_STAGE2_UNIFORM_REFINEMENT_ROUNDS = 1
 SCALED_MAX_CURVATURE_THRESHOLD = 0.8
 MAX_LEAF_REFINE_WEIGHT = 128
 RUNS = 1
-POOL_WORKERS = min(5, multiprocessing.cpu_count())
+POOL_WORKERS = 1 + multiprocessing.cpu_count()
 
 URCHIN_PARAMS = list(range(2, 12, 2))
 # URCHIN_PARAMS = list(range(2, 7, 2))
