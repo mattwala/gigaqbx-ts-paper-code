@@ -38,29 +38,9 @@ MAX_LEAF_REFINE_WEIGHT = 128
 RUNS = 1
 POOL_WORKERS = min(5, multiprocessing.cpu_count())
 
-# URCHIN_PARAMS = list(range(2, 12, 2))
+URCHIN_PARAMS = list(range(2, 12, 2))
 # URCHIN_PARAMS = list(range(2, 7, 2))
-URCHIN_PARAMS = (1,)
 DONUT_PARAMS = list(range(1, 6))
-
-
-nan = float("nan")
-
-
-CALIBRATION_PARAMS_QBX5_FMM15_LAPLACE3D = {
-        'c_l2l': 5.89e-09,
-        'c_l2p': nan,
-        'c_l2qbxl': 2.57e-08,
-        'c_m2l': 3.24e-09,
-        'c_m2m': 5.43e-09,
-        'c_m2p': nan,
-        'c_m2qbxl': 3.36e-09,
-        'c_p2l': 1.15e-08,
-        'c_p2m': 1.20e-08,
-        'c_p2p': nan,
-        'c_p2p_tsqbx': 9.51e-09,
-        'c_p2qbxl': 1.43e-08,
-        'c_qbxl2p': 6.66e-07}
 
 
 DEFAULT_LPOT_KWARGS = dict(
@@ -75,8 +55,7 @@ DEFAULT_LPOT_KWARGS = dict(
         _max_leaf_refine_weight=MAX_LEAF_REFINE_WEIGHT,
         _from_sep_smaller_min_nsources_cumul=0,
         _use_target_specific_qbx=False,
-        performance_model=PerformanceModel(
-            calibration_params=CALIBRATION_PARAMS_QBX5_FMM15_LAPLACE3D),
+        performance_model=PerformanceModel(),
         )
 
 
