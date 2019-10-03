@@ -168,6 +168,7 @@ def donut_geometry_getter(nrows):
     return partial(_torus_lpot_source, 2, 1, 40, 20, (2, nrows, 1), 0.1)
 
 
+PARAMS_DIR = "params"
 OUTPUT_DIR = "raw-data"
 
 
@@ -178,6 +179,10 @@ def make_output_file(filename, **flags):
 
 def output_data(obj, outfile):
     json.dump(obj, outfile, cls=utils.CostResultEncoder)
+
+
+def load_params(filename):
+    return json.load(open(os.path.join(PARAMS_DIR, filename), "r"))
 
 
 # }}}
@@ -240,7 +245,7 @@ def run_perf_model(
         geometry_getters, perf_model, lpot_kwargs=None, which_op="S",
         helmholtz_k=0):
     """Run the performance model on a set of geometries, in parallel.
-    
+
     Params:
 
         geometry_getters: List of callables returning geometries
@@ -271,11 +276,13 @@ def run_perf_model(
 
 
 def run_urchin_time_prediction_experiment():
-    perf_model = PerformanceModel()
+    perf_model = PerformanceModel(
+            calibration_params=load_params("urchin-params.json"))
     urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
     perf_results = run_perf_model(urchins, perf_model)
     results = [{"k": k, "cost": result}
             for k, result in zip(URCHIN_PARAMS, perf_results)]
+
     with make_output_file("urchin-time-prediction-modeled-costs.json")\
             as outfile:
         output_data(results, outfile)
