@@ -3,9 +3,11 @@
 import matplotlib
 import numpy as np  # noqa
 
+import os
+import argparse
+import json
+import utils
 import logging
-import pickle
-import pandas as pd
 
 logging.basicConfig(level=logging.INFO)
 
@@ -47,6 +49,10 @@ def open_output_file(filename, **kwargs):
     return open(os.path.join(OUTPUT_DIR, filename), "w", **kwargs)
 
 
+def read_data(infile):
+    return json.load(infile, cls=utils.CostResultDecoder)
+
+
 def print_table(table, headers, outf_name, column_formats=None):
     with open_output_file(outf_name) as outfile:
         def my_print(s):
@@ -73,14 +79,36 @@ EXPERIMENTS = (
 
 def generate_urchin_time_prediction_table():
     with open_data_file("urchin-time-prediction-modeled-costs.json") as infile:
-        modeled_costs = read_data(infile)
+        modeled_costs_raw = read_data(infile)
 
     with open_data_file("urchin-time-prediction-actual-costs.json") as infile:
-        actual_costs = read_data(infile)
+        actual_costs_raw = read_data(infile)
 
-    assert len(modeled_costs) == len(actual_costs)
-    nresults = len(modeled_costs)
-    urchin_ks = sorted(cost["k"] for cost in modeled_costs)
+    #assert len(modeled_costs_raw) == len(actual_costs_raw)
+    nresults = len(modeled_costs_raw)
+    urchin_ks = sorted(cost["k"] for cost in modeled_costs_raw)
+
+    from pytential.qbx.performance import estimate_calibration_params
+
+    modeled_costs = []
+
+    for k in urchin_ks:
+        for field in modeled_costs_raw:
+            if field["k"] == k:
+                modeled_costs.append(field["cost"])
+                break
+        else:
+            raise ValueError("not found: %d" % k)
+
+    actual_costs = []
+
+    for k in urchin_ks:
+        for field in actual_costs_raw:
+            if field["k"] == k:
+                actual_costs.append(field["cost"])
+                break
+        else:
+            raise ValueError("not found: %d" % k)
 
     headers = (
             (
@@ -89,7 +117,7 @@ def generate_urchin_time_prediction_table():
                 ),
             (
                 r"\cmidrule(lr){2-%d}" % (1 + nresults),
-                ) + tuple(r"\cellcenter{\gamma_{%d}}" % k for k in urchin_ks))
+                ) + tuple(r"\cellcenter{$\gamma_{%d}$}" % k for k in urchin_ks))
 
     rows = []
 
@@ -97,18 +125,10 @@ def generate_urchin_time_prediction_table():
 
     row = ["Actual"]
 
-    for k in urchin_ks:
-        for field in actual_costs:
-            if field["k"] == k:
-                break
-        else:
-            raise ValueError("not found: %d" % k)
-
-        cost = field["cost"]
+    for cost in actual_costs:
         time = sum(
                 timing_result["process_elapsed"]
                 for timing_result in cost.values())
-
         row.append("%.2f" % time)
 
     rows.append(row)
@@ -119,14 +139,7 @@ def generate_urchin_time_prediction_table():
 
     row = ["Model"]
 
-    for k in urchin_ks:
-        for field in modeled_costs:
-            if field["k"] == k:
-                break
-        else:
-            raise ValueError("not found: %d" % k)
-
-        cost = field["cost"]
+    for cost in modeled_costs:
         time = sum(cost.get_predicted_times(True).values())
         row.append("%.2f" % time)
 
