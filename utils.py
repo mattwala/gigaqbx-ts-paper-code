@@ -70,7 +70,7 @@ class ParserError(RuntimeError):
     pass
 
 
-def lex(s):
+def tokenize(s):
     for match in _TOKEN_RE.finditer(s):
         kind = match.lastgroup
         pos = match.start()
@@ -98,6 +98,7 @@ def lex(s):
             yield Token(TokenType.STRING, value[1:-1], pos)
 
         else:
+            assert kind == "MISMATCH"
             raise ParserError(
                     "unexpected token at position %d" % pos)
 
@@ -114,7 +115,7 @@ def sexpr_to_pymbolic(expr):
                 "unexpected token at position %d (got '%r')"
                 % (token.pos, token))
 
-    for token in lex(expr):
+    for token in tokenize(expr):
         if token.token_type in (TokenType.LPAREN, TokenType.IDENT):
             stack.append(token)
 
