@@ -62,7 +62,8 @@ _STRING_RE = re.compile(_TOKEN_SPECIFICATION["STRING"])
 
 
 TokenType = enum.Enum(
-        "TokenType", "LPAREN, RPAREN, FLOAT, INT, IDENT, STRING, END")
+        "TokenType",
+        "LPAREN, RPAREN, FLOAT, INT, SUM, PRODUCT, POWER, STRING, VAR, END")
 Token = collections.namedtuple("Token", "token_type, data, pos")
 
 
@@ -92,7 +93,22 @@ def lex(s):
             yield Token(TokenType.INT, int(value), pos)
 
         elif kind == "IDENT":
-            yield Token(TokenType.IDENT, value, pos)
+            if value == "Sum":
+                yield Token(TokenType.SUM, None, pos)
+
+            elif value == "Product":
+                yield Token(TokenType.PRODUCT, None, pos)
+
+            elif value == "Power":
+                yield Token(TokenType.POWER, None, pos)
+
+            elif value == "Var":
+                yield Token(TokenType.VAR, None, pos)
+
+            else:
+                raise ParserError(
+                        "unexpected identifier '%s' at position %d"
+                        % (value, pos))
 
         elif kind == "STRING":
             yield Token(TokenType.STRING, value, pos)
@@ -129,26 +145,26 @@ def sexpr_to_pymbolic(expr):
 
     def parse_expr():
         if token.token_type == TokenType.LPAREN:
-            expect(TokenType.IDENT)
+            next_token()
 
-            if token.data == "Var":
+            if token.token_type == TokenType.VAR:
                 expect(TokenType.STRING)
                 varname = token.data[1:-1]
                 expect(TokenType.RPAREN)
                 next_token()
                 return Variable(varname)
 
-            elif token.data == "Sum":
+            elif token.token_type == TokenType.SUM:
                 next_token()
                 children = parse_children()
                 return Sum(children)
 
-            elif token.data == "Product":
+            elif token.token_type == TokenType.PRODUCT:
                 next_token()
                 children = parse_children()
                 return Product(children)
 
-            elif token.data == "Power":
+            elif token.token_type == TokenType.POWER:
                 next_token()
                 base = parse_expr()
                 exp = parse_expr()

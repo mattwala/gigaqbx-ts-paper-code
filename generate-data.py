@@ -157,7 +157,7 @@ def make_output_file(filename, **flags):
 
 
 def output_data(obj, outfile):
-    json.dump(obj, outfile, cls=utils.CostResultEncoder)
+    json.dump(obj, outfile, cls=utils.CostResultEncoder, indent=1)
 
 
 def load_params(filename):
