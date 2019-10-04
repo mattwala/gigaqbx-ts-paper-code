@@ -62,8 +62,7 @@ _STRING_RE = re.compile(_TOKEN_SPECIFICATION["STRING"])
 
 
 TokenType = enum.Enum(
-        "TokenType",
-        "LPAREN, RPAREN, FLOAT, INT, SUM, PRODUCT, POWER, STRING, VAR, END")
+        "TokenType", "LPAREN, RPAREN, FLOAT, INT, IDENT, STRING, END")
 Token = collections.namedtuple("Token", "token_type, data, pos")
 
 
@@ -93,111 +92,74 @@ def lex(s):
             yield Token(TokenType.INT, int(value), pos)
 
         elif kind == "IDENT":
-            if value == "Sum":
-                yield Token(TokenType.SUM, None, pos)
-
-            elif value == "Product":
-                yield Token(TokenType.PRODUCT, None, pos)
-
-            elif value == "Power":
-                yield Token(TokenType.POWER, None, pos)
-
-            elif value == "Var":
-                yield Token(TokenType.VAR, None, pos)
-
-            else:
-                raise ParserError(
-                        "unexpected identifier '%s' at position %d"
-                        % (value, pos))
+            yield Token(TokenType.IDENT, value, pos)
 
         elif kind == "STRING":
-            yield Token(TokenType.STRING, value, pos)
+            yield Token(TokenType.STRING, value[1:-1], pos)
 
         else:
             raise ParserError(
-                    "unexpected token starting at position %d" % pos)
+                    "unexpected token at position %d" % pos)
 
     yield Token(TokenType.END, None, len(s))
 
 
 def sexpr_to_pymbolic(expr):
-    tokens = lex(expr)
-    token = next(tokens)
     from pymbolic.primitives import Variable, Sum, Product, Power
+
+    stack = []
 
     def error(token):
         raise ParserError(
-                "unexpected token starting at position %d (got '%r')"
+                "unexpected token at position %d (got '%r')"
                 % (token.pos, token))
 
-    def next_token():
-        nonlocal token
-        try:
-            token = next(tokens)
-        except StopIteration:
-            raise ParserError("unexpected end of input")
+    for token in lex(expr):
+        if token.token_type in (TokenType.LPAREN, TokenType.IDENT):
+            stack.append(token)
 
-    def expect(*token_types):
-        next_token()
-        if token.token_type not in token_types:
-            error(token)
-        return token
+        elif token.token_type in (
+                TokenType.FLOAT, TokenType.INT, TokenType.STRING):
+            stack.append(token.data)
 
-    def parse_expr():
-        if token.token_type == TokenType.LPAREN:
-            next_token()
+        elif token.token_type == TokenType.RPAREN:
+            args = []
+            while stack and not (
+                    isinstance(stack[-1], Token)
+                    and stack[-1].token_type == TokenType.LPAREN):
+                args.append(stack.pop())
+            if not stack:
+                error(token)
+            lparen = stack.pop()
+            args = tuple(reversed(args))
 
-            if token.token_type == TokenType.VAR:
-                expect(TokenType.STRING)
-                varname = token.data[1:-1]
-                expect(TokenType.RPAREN)
-                next_token()
-                return Variable(varname)
+            if not args:
+                error(token)
+            sym = args[0]
+            if not isinstance(sym, Token):
+                error(lparen)
+            assert sym.token_type == TokenType.IDENT
 
-            elif token.token_type == TokenType.SUM:
-                next_token()
-                children = parse_children()
-                return Sum(children)
-
-            elif token.token_type == TokenType.PRODUCT:
-                next_token()
-                children = parse_children()
-                return Product(children)
-
-            elif token.token_type == TokenType.POWER:
-                next_token()
-                base = parse_expr()
-                exp = parse_expr()
-                if token.token_type != TokenType.RPAREN:
-                    error(token)
-                next_token()
-                return Power(base, exp)
-
+            if sym.data == "Sum":
+                val = Sum(args[1:])
+            elif sym.data == "Product":
+                val = Product(args[1:])
+            elif sym.data == "Power":
+                val = Power(*args[1:])
+            elif sym.data == "Var":
+                val = Variable(*args[1:])
             else:
+                error(sym)
+
+            stack.append(val)
+
+        elif token.token_type == TokenType.END:
+            if len(stack) != 1:
+                error(token)
+            if isinstance(stack[0], Token):
                 error(token)
 
-        elif token.token_type in (TokenType.INT, TokenType.FLOAT):
-            val = token.data
-            next_token()
-            return val
-
-        else:
-            error(token)
-
-    def parse_children():
-        children = [parse_expr()]
-
-        while True:
-            if token.token_type == TokenType.RPAREN:
-                next_token()
-                return tuple(children)
-            children.append(parse_expr())
-
-    result = parse_expr()
-    if token.token_type != TokenType.END:
-        error(token)
-
-    return result
+            return stack[0]
 
 
 class CostResultEncoder(json.JSONEncoder):
@@ -355,18 +317,16 @@ def test_pymbolic_sexprs():
             sexpr_to_pymbolic(expr)
 
     check_error("")
+    check_error("(")
     check_error(")")
     check_error("()")
     check_error("1 2 3")
-    check_error("(Power 1)")
     check_error("(Var ''')")
     check_error("(Power (Var 'x'")
-    check_error("(Power 1 2 3)")
     check_error("(Product 1 2) (Sum 1 2)")
-    check_error("(Sum)")
-    check_error("(Var 4)")
-    check_error("(Product Sum)")
     check_error("(Sum (Sum 1 2) 3")
+    check_error("(Error)")
+    check_error("Sum")
 
 
 if __name__ == "__main__":
