@@ -44,19 +44,25 @@ def pymbolic_to_sexpr(expr):
     return SExprStringifier()(expr)
 
 
-_WHITESPACE_RE = re.compile("[ \t\n]+")
-_LPAREN_RE = re.compile(r"\(")
-_RPAREN_RE = re.compile(r"\)")
-_FLOAT_RE = re.compile(r"[-+]?([0-9]+\.[0-9]*)([eE][-+]?[0-9]+)?")
-_INT_RE = re.compile("[-+]?[0-9][0-9]*")
-_IDENT_RE = re.compile("[a-zA-Z_][a-zA-Z_0-9]*")
-_STRING_RE = re.compile("'[a-zA-Z_0-9]*'")
+_TOKEN_SPECIFICATION = {
+        "WHITESPACE": "[ \t\n]+",
+        "LPAREN":     "\\(",
+        "RPAREN":     "\\)",
+        "FLOAT":      "[-+]?([0-9]+\\.[0-9]*)([eE][-+]?[0-9]+)?",
+        "INT":        "[-+]?[0-9]+",
+        "IDENT":      "[a-zA-Z]+",
+        "STRING":     "'[a-zA-Z_0-9]*'",
+        "MISMATCH":   ".",
+}
+
+
+_TOKEN_RE = re.compile(
+        "|".join("(?P<%s>%s)" % pair for pair in _TOKEN_SPECIFICATION.items()))
+_STRING_RE = re.compile(_TOKEN_SPECIFICATION["STRING"])
 
 
 TokenType = enum.Enum(
         "TokenType", "LPAREN, RPAREN, FLOAT, INT, IDENT, STRING, END")
-
-
 Token = collections.namedtuple("Token", "token_type, data, pos")
 
 
@@ -65,44 +71,37 @@ class ParserError(RuntimeError):
 
 
 def lex(s):
-    pos = 0
+    for match in _TOKEN_RE.finditer(s):
+        kind = match.lastgroup
+        pos = match.start()
+        value = match.group()
 
-    match = None
+        if kind == "WHITESPACE":
+            continue
 
-    def matches(reg):
-        nonlocal match
-        match = reg.match(s, pos)
-        return match
-
-    while pos < len(s):
-        if matches(_WHITESPACE_RE):
-            pass
-
-        elif matches(_LPAREN_RE):
+        elif kind == "LPAREN":
             yield Token(TokenType.LPAREN, None, pos)
 
-        elif matches(_RPAREN_RE):
+        elif kind == "RPAREN":
             yield Token(TokenType.RPAREN, None, pos)
 
-        elif matches(_FLOAT_RE):
-            yield Token(TokenType.FLOAT, float(s[pos:match.end()]), pos)
+        elif kind == "FLOAT":
+            yield Token(TokenType.FLOAT, float(value), pos)
 
-        elif matches(_INT_RE):
-            yield Token(TokenType.INT, int(s[pos:match.end()]), pos)
+        elif kind == "INT":
+            yield Token(TokenType.INT, int(value), pos)
 
-        elif matches(_IDENT_RE):
-            yield Token(TokenType.IDENT, s[pos:match.end()], pos)
+        elif kind == "IDENT":
+            yield Token(TokenType.IDENT, value, pos)
 
-        elif matches(_STRING_RE):
-            yield Token(TokenType.STRING, s[pos:match.end()], pos)
+        elif kind == "STRING":
+            yield Token(TokenType.STRING, value, pos)
 
         else:
             raise ParserError(
                     "unexpected token starting at position %d" % pos)
 
-        pos = match.end()
-
-    yield Token(TokenType.END, None, pos)
+    yield Token(TokenType.END, None, len(s))
 
 
 def sexpr_to_pymbolic(expr):
