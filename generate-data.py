@@ -318,7 +318,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"{label}-{which_op}-tuning-baseline-nmax.json"
+    output_fname = f"param-study-{label}-{which_op}-baseline-nmax.json"
     with make_output_file(output_fname) as outfile:
         output_data(baseline_nmax_results, outfile)
 
@@ -337,7 +337,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"{label}-{which_op}-tuning-baseline-nmpole.json"
+    output_fname = f"param-study-{label}-{which_op}-baseline-nmpole.json"
     with make_output_file(output_fname) as outfile:
         output_data(baseline_nmpole_results, outfile)
 
@@ -357,7 +357,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"{label}-{which_op}-tuning-tsqbx-nmax.json"
+    output_fname = f"param-study-{label}-{which_op}-tsqbx-nmax.json"
     with make_output_file(output_fname) as outfile:
         output_data(tsqbx_nmax_results, outfile)
 
@@ -376,7 +376,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"{label}-{which_op}-tuning-tsqbx-nmpole.json"
+    output_fname = f"param-study-{label}-{which_op}-tsqbx-nmpole.json"
     with make_output_file(output_fname) as outfile:
         output_data(tsqbx_nmpole_results, outfile)
 
@@ -390,7 +390,8 @@ def run_tuning_study(
             tsqbx_nmax=tsqbx_nmax,
             tsqbx_nmpole=tsqbx_nmpole)
 
-    with make_output_file(f"{label}-{which_op}-tuning-params.json") as outfile:
+    output_fname = f"param-study-{label}-{which_op}-best-params.json"
+    with make_output_file(output_fname) as outfile:
         output_data(result, outfile)
 
 # }}}
@@ -469,6 +470,29 @@ def run_urchin_tuning_study_experiment():
             which_op="S", helmholtz_k=0)
 
 
+def run_donut_tuning_study_experiment():
+    perf_model = PerformanceModel(
+            calibration_params=load_params("donut-params.json"))
+
+    tuning_donut = donut_geometry_getter(3)
+
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+    lpot_kwargs["qbx_order"] = 9
+    lpot_kwargs["fmm_order"] = 20
+    lpot_kwargs["performance_model"] = perf_model
+
+    baseline_nmax_range = range(32, 512, 32)
+    baseline_nmpole_range = range(0, 300, 20)
+    tsqbx_nmax_range = range(32, 2000, 64)
+    tsqbx_nmpole_range = range(0, 300, 20)
+
+    run_tuning_study(
+            tuning_donut, "donut", lpot_kwargs,
+            baseline_nmax_range, baseline_nmpole_range,
+            tsqbx_nmax_range, tsqbx_nmpole_range,
+            which_op="S", helmholtz_k=0)
+
+
 def run_experiments(experiments):
     # Time prediction
     if "urchin-time-prediction" in experiments:
@@ -478,14 +502,18 @@ def run_experiments(experiments):
     if "urchin-tuning-study" in experiments:
         run_urchin_tuning_study_experiment()
 
+    if "donut-tuning-study" in experiments:
+        run_donut_tuning_study_experiment()
+
 
 EXPERIMENTS = (
         "urchin-time-prediction",
         "urchin-tuning-study",
         "urchin-optimization-study",
         "urchin-green-accuracy",
-        "torus-optimization-study",
-        "torus-green-accuracy",
+        "donut-tuning-study",
+        "donut-optimization-study",
+        "donut-green-accuracy",
         "plane-optimization-study",
         "plane-bvp-accuracy",
 )
