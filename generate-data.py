@@ -162,13 +162,18 @@ def make_output_file(filename, **flags):
     return open(os.path.join(OUTPUT_DIR, filename), "w", **flags)
 
 
+def make_params_file(filename, **flags):
+    os.makedirs(PARAMS_DIR, exist_ok=True)
+    return open(os.path.join(PARAMS_DIR, filename), "w", **flags)
+
+
+def load_params(filename, **flags):
+    with open(os.path.join(PARAMS_DIR, filename), "r", **flags) as outf:
+        return json.load(outf, cls=utils.CostResultDecoder)
+
+
 def output_data(obj, outfile):
     json.dump(obj, outfile, cls=utils.CostResultEncoder, indent=1)
-
-
-def load_params(filename):
-    return json.load(open(os.path.join(PARAMS_DIR, filename), "r"))
-
 
 # }}}
 
@@ -225,11 +230,11 @@ def get_lpot_cost(which, helmholtz_k, geometry_getter, lpot_kwargs, kind):
 # }}}
 
 
-# {{{ parameter study
+# {{{ parameter study - vary parameter with constant geometry
 
 def run_parameter_study(
         param_name, param_values, geometry_getter,
-        base_lpot_kwargs, which_op, helmholtz_k):
+        lpot_kwargs, which_op, helmholtz_k):
     """Run the cost model over a geometry, varying a single parameter value.
 
     Params:
@@ -238,8 +243,7 @@ def run_parameter_study(
             to QBXLayerPotentialSource)
         param_values: Range of values to check
         geometry_getter: Geometry getter
-        label: Label for output files
-        base_lpot_kwargs: Baseline kwargs to QBXLayerPotentialSource
+        lpot_kwargs: Baseline constructor args to QBXLayerPotentialSource
         which_op: "S" or "D"
         helmholtz_k: Helmholtz parameter
 
@@ -250,7 +254,7 @@ def run_parameter_study(
     param_values = list(param_values)
     task_params = []
     for value in param_values:
-        task_param = base_lpot_kwargs.copy()
+        task_param = lpot_kwargs.copy()
         task_param[param_name] = value
         task_params.append(task_param)
 
@@ -284,7 +288,42 @@ def get_optimal_parameter_value(results):
 # }}}
 
 
-# {{{ run a tuning study on a geometry
+# {{{ geometry study - vary geometry with constant parameters
+
+def run_geometry_study(
+        geometry_getters, geometry_labels, lpot_kwargs, which_op, helmholtz_k):
+    """Run the cost model over a set of geometries.
+
+    Params:
+
+        geometry_getters: Geometry getters
+        lpot_kwargs: Constructor kwargs to QBXLayerPotentialSource
+        which_op: "S" or "D"
+        helmholtz_k: Helmholtz parameter
+
+    Returns:
+
+        A list of dictionaries, each of which contain a geometry label and a
+        cost model output
+    """
+    with multiprocessing.Pool(POOL_WORKERS) as pool:
+        results = pool.map(
+                partial(get_lpot_cost, which_op, helmholtz_k,
+                        lpot_kwargs=lpot_kwargs, kind="model"),
+                geometry_getters)
+
+    results = [
+            {
+                "geometry": label,
+                "cost": cost}
+            for label, cost in zip(geometry_labels, results)]
+
+    return results
+
+# }}}
+
+
+# {{{ tune parameters for a single geometry
 
 def run_tuning_study(
         tuning_geometry, label, lpot_kwargs, baseline_nmax_range,
@@ -296,7 +335,7 @@ def run_tuning_study(
     Params:
 
         tuning_geometry: Geometry getter
-        label: Name
+        label: Label for saving results
         lpot_kwargs: Base kwargs for the QBXLayerPotentialSource
         which_op: "S" or "D"
         helmholtz_k: Helmholtz parameter
@@ -307,7 +346,8 @@ def run_tuning_study(
     """
     lpot_kwargs = lpot_kwargs.copy()
 
-    # Figure out baseline nmax.
+    # {{{ figure out baseline nmax
+
     logger.info("finding baseline value of nmax")
 
     baseline_nmax_results = run_parameter_study(
@@ -318,7 +358,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"param-study-{label}-{which_op}-baseline-nmax.json"
+    output_fname = f"tuning-study-{label}-baseline-nmax.json"
     with make_output_file(output_fname) as outfile:
         output_data(baseline_nmax_results, outfile)
 
@@ -326,7 +366,10 @@ def run_tuning_study(
     lpot_kwargs["_max_leaf_refine_weight"] = baseline_nmax
     logger.info("baseline value of nmax: %d", baseline_nmax)
 
-    # Figure out baseline nmpole.
+    # }}}
+
+    # {{{ figure out baseline nmpole
+
     logger.info("finding baseline value of nmpole")
 
     baseline_nmpole_results = run_parameter_study(
@@ -337,7 +380,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"param-study-{label}-{which_op}-baseline-nmpole.json"
+    output_fname = f"tuning-study-{label}-baseline-nmpole.json"
     with make_output_file(output_fname) as outfile:
         output_data(baseline_nmpole_results, outfile)
 
@@ -345,7 +388,10 @@ def run_tuning_study(
     lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = baseline_nmpole
     logger.info("baseline value of nmpole: %d", baseline_nmpole)
 
-    # Figure out nmax for tsqbx.
+    # }}}
+
+    # {{{ figure out nmax for tsqbx
+
     logger.info("finding optimal nmax value when using tsqbx")
     lpot_kwargs["_use_target_specific_qbx"] = True
 
@@ -357,7 +403,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"param-study-{label}-{which_op}-tsqbx-nmax.json"
+    output_fname = f"tuning-study-{label}-tsqbx-nmax.json"
     with make_output_file(output_fname) as outfile:
         output_data(tsqbx_nmax_results, outfile)
 
@@ -365,7 +411,10 @@ def run_tuning_study(
     lpot_kwargs["_max_leaf_refine_weight"] = tsqbx_nmax
     logger.info("optimal nmax value for tsqbx: %d", tsqbx_nmax)
 
-    # Figure out nmpole for tsqbx.
+    # }}}
+
+    # {{{ figure out nmpole for tsqbx
+
     logger.info("finding optimal nmpole value for tsqbx")
 
     tsqbx_nmpole_results = run_parameter_study(
@@ -376,7 +425,7 @@ def run_tuning_study(
             which_op,
             helmholtz_k)
 
-    output_fname = f"param-study-{label}-{which_op}-tsqbx-nmpole.json"
+    output_fname = f"tuning-study-{label}-tsqbx-nmpole.json"
     with make_output_file(output_fname) as outfile:
         output_data(tsqbx_nmpole_results, outfile)
 
@@ -384,72 +433,148 @@ def run_tuning_study(
     lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = tsqbx_nmpole
     logger.info("optimal nmpole value for tsqbx: %d", tsqbx_nmpole)
 
+    # }}}
+
     result = dict(
             baseline_nmax=baseline_nmax,
             baseline_nmpole=baseline_nmpole,
             tsqbx_nmax=tsqbx_nmax,
             tsqbx_nmpole=tsqbx_nmpole)
 
-    output_fname = f"param-study-{label}-{which_op}-best-params.json"
-    with make_output_file(output_fname) as outfile:
+    params_fname = f"tuning-params-{label}.json"
+    with make_params_file(params_fname) as outfile:
         output_data(result, outfile)
 
 # }}}
 
 
-# {{{ run the perf model on a set of geometries
+# {{{ collect results of applying optimizations on a set of geometries
 
-def run_perf_model(
-        geometry_getters, perf_model, lpot_kwargs=None, which_op="S",
-        helmholtz_k=0):
-    """Run the performance model on a set of geometries, in parallel.
+def run_optimization_study(
+        geometry_getters, geometry_labels,
+        label, lpot_kwargs, params, which_op, helmholtz_k):
+    """Apply a sequence of optimizations to a set of geometries and record
+    performance results.
 
     Params:
 
-        geometry_getters: List of callables returning geometries
-        perf_model: The performance model to test
-        lpot_kwargs: Overrides DEFAULT_LPOT_KWARGS
+        geometry_getters: List of geometry getters
+        label: Label for saving results
+        lpot_kwargs: Baseline kwargs for the QBXLayerPotentialSource
+        params: Params obtained as result of *run_tuning_study*
         which_op: "S" or "D"
         helmholtz_k: Helmholtz parameter
-
-    Returns:
-
-        A list of performance model results
     """
 
-    if lpot_kwargs is None:
-        lpot_kwargs = DEFAULT_LPOT_KWARGS
+    # {{{ opt level 0
+
+    logger.info("Obtaining baseline performance")
 
     lpot_kwargs = lpot_kwargs.copy()
-    lpot_kwargs["performance_model"] = perf_model
 
-    runner = partial(
-            get_lpot_cost,
-            which_op, helmholtz_k, lpot_kwargs=lpot_kwargs, kind="model")
+    lpot_kwargs["_use_target_specific_qbx"] = False
+    lpot_kwargs["_max_leaf_refine_weight"] = params["baseline_nmax"]
+    lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = (
+            params["baseline_nmpole"])
 
-    with multiprocessing.Pool(POOL_WORKERS) as pool:
-        return pool.map(runner, geometry_getters)
+    opt0_results = run_geometry_study(
+            geometry_getters,
+            geometry_labels,
+            lpot_kwargs,
+            which_op,
+            helmholtz_k)
+
+    output_fname = f"optimization-study-{label}-opt0.json"
+    with make_output_file(output_fname) as outfile:
+        output_data(opt0_results, outfile)
+
+    # }}}
+
+    # {{{ opt level 1
+
+    logger.info("Obtaining performance with TSQBX")
+
+    lpot_kwargs["_use_target_specific_qbx"] = True
+
+    opt1_results = run_geometry_study(
+            geometry_getters,
+            geometry_labels,
+            lpot_kwargs,
+            which_op,
+            helmholtz_k)
+
+    output_fname = f"optimization-study-{label}-opt1.json"
+    with make_output_file(output_fname) as outfile:
+        output_data(opt1_results, outfile)
+
+    # }}}
+
+    # {{{ opt level 2
+
+    logger.info("Obtaining performance with TSQBX + optimal nmax")
+
+    lpot_kwargs["_max_leaf_refine_weight"] = params["tsqbx_nmax"]
+
+    opt2_results = run_geometry_study(
+            geometry_getters,
+            geometry_labels,
+            lpot_kwargs,
+            which_op,
+            helmholtz_k)
+
+    output_fname = f"optimization-study-{label}-opt2.json"
+    with make_output_file(output_fname) as outfile:
+        output_data(opt2_results, outfile)
+
+    # }}}
+
+    # {{{ opt level 3
+
+    logger.info(
+            "Obtaining performance with TSQBX + "
+            "optimal nmax + optimal nmpole")
+
+    lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = (
+            params["tsqbx_nmpole"])
+
+    opt3_results = run_geometry_study(
+            geometry_getters,
+            geometry_labels,
+            lpot_kwargs,
+            which_op,
+            helmholtz_k)
+
+    output_fname = f"optimization-study-{label}-opt3.json"
+    with make_output_file(output_fname) as outfile:
+        output_data(opt3_results, outfile)
+
+    # }}}
 
 # }}}
 
 
 def run_urchin_time_prediction_experiment():
     perf_model = PerformanceModel(
-            calibration_params=load_params("urchin-params.json"))
-    urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
-    perf_results = run_perf_model(urchins, perf_model)
-    results = [
-            {"k": k, "cost": result}
-            for k, result in zip(URCHIN_PARAMS, perf_results)]
+            calibration_params=load_params(
+                "calibration-params-urchin.json"))
 
-    with make_output_file("urchin-time-prediction-modeled-costs.json")\
+    urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
+
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+    lpot_kwargs["performance_model"] = perf_model
+
+    results = run_geometry_study(
+            urchins, URCHIN_PARAMS, lpot_kwargs, "S", 0)
+
+    with make_output_file("time-prediction-urchin-modeled-costs.json")\
             as outfile:
         output_data(results, outfile)
 
 
 def run_urchin_tuning_study_experiment():
     perf_model = PerformanceModel(
-            calibration_params=load_params("urchin-params.json"))
+            calibration_params=load_params(
+                "calibration-params-urchin-S.json"))
 
     tuning_urchin = urchin_geometry_getter(TUNING_URCHIN)
 
@@ -470,11 +595,31 @@ def run_urchin_tuning_study_experiment():
             which_op="S", helmholtz_k=0)
 
 
+def run_urchin_optimization_study_experiment():
+    tuning_params = load_params("tuning-params-urchin.json")
+
+    perf_model = PerformanceModel(
+            calibration_params=load_params(
+                "calibration-params-urchin.json"))
+
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+    lpot_kwargs["qbx_order"] = 5
+    lpot_kwargs["fmm_order"] = 15
+    lpot_kwargs["performance_model"] = perf_model
+
+    urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
+
+    run_optimization_study(
+            urchins, URCHIN_PARAMS, "urchin", lpot_kwargs,
+            tuning_params, "S", 0)
+
+
 def run_donut_tuning_study_experiment():
     perf_model = PerformanceModel(
-            calibration_params=load_params("donut-params.json"))
+            calibration_params=load_params(
+                "calibration-params-donut.json"))
 
-    tuning_donut = donut_geometry_getter(3)
+    tuning_donut = donut_geometry_getter(5)
 
     lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
     lpot_kwargs["qbx_order"] = 9
@@ -498,12 +643,17 @@ def run_experiments(experiments):
     if "urchin-time-prediction" in experiments:
         run_urchin_time_prediction_experiment()
 
-    # Tuning study for urchin (to obtain parameters for optimization study)
+    # Tuning study for urchins
     if "urchin-tuning-study" in experiments:
         run_urchin_tuning_study_experiment()
 
+    # Tuning study for torus grid
     if "donut-tuning-study" in experiments:
         run_donut_tuning_study_experiment()
+
+    # Optimization study for urchin family
+    if "urchin-optimization-study" in experiments:
+        run_urchin_optimization_study_experiment()
 
 
 EXPERIMENTS = (
