@@ -1,0 +1,447 @@
+[
+ {
+  "geometry": 2,
+  "cost": {
+   "form_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 12.425364424474537,
+     "process_elapsed": 12.433044945000006
+    }
+   },
+   "coarsen_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 9.409295284189284,
+     "process_elapsed": 9.410026321000004
+    }
+   },
+   "eval_direct": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.3040864700451493,
+     "process_elapsed": 0.3564829050000071
+    }
+   },
+   "multipole_to_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 19.39383052289486,
+     "process_elapsed": 369.148425172
+    }
+   },
+   "eval_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.2521214233711362,
+     "process_elapsed": 0.25211045399998966
+    }
+   },
+   "form_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 4.51137097645551,
+     "process_elapsed": 77.15149523000002
+    }
+   },
+   "refine_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 6.107759391888976,
+     "process_elapsed": 6.122691344999907
+    }
+   },
+   "eval_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.2697131736204028,
+     "process_elapsed": 0.2697096590000001
+    }
+   },
+   "form_global_qbx_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 36.30987097136676,
+     "process_elapsed": 719.104691358
+    }
+   },
+   "translate_box_multipoles_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 18.557067528367043,
+     "process_elapsed": 258.16432737800005
+    }
+   },
+   "translate_box_local_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.23103964235633612,
+     "process_elapsed": 2.1776358969998455
+    }
+   },
+   "eval_qbx_expansions": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 2.3538390481844544,
+     "process_elapsed": 2.4773759980000705
+    }
+   }
+  }
+ },
+ {
+  "geometry": 4,
+  "cost": {
+   "form_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 36.80439741257578,
+     "process_elapsed": 36.808284418000085
+    }
+   },
+   "coarsen_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 25.651462252251804,
+     "process_elapsed": 25.741374855000004
+    }
+   },
+   "eval_direct": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.8106162799522281,
+     "process_elapsed": 0.881113366000136
+    }
+   },
+   "multipole_to_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 66.72489132359624,
+     "process_elapsed": 1280.136352852
+    }
+   },
+   "eval_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.9729015594348311,
+     "process_elapsed": 0.9732115080000767
+    }
+   },
+   "form_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 15.942084685899317,
+     "process_elapsed": 277.272534232
+    }
+   },
+   "refine_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 21.167813209816813,
+     "process_elapsed": 21.172034825000082
+    }
+   },
+   "eval_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.9649070259183645,
+     "process_elapsed": 0.9648910669998259
+    }
+   },
+   "form_global_qbx_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 150.52061324939132,
+     "process_elapsed": 2990.7640971719998
+    }
+   },
+   "translate_box_multipoles_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 79.93577443622053,
+     "process_elapsed": 1091.5521291639998
+    }
+   },
+   "translate_box_local_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 0.9446163643151522,
+     "process_elapsed": 7.865528319000077
+    }
+   },
+   "eval_qbx_expansions": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 7.427447968162596,
+     "process_elapsed": 7.725368768999942
+    }
+   }
+  }
+ },
+ {
+  "geometry": 6,
+  "cost": {
+   "form_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 120.23046831786633,
+     "process_elapsed": 120.23925310599952
+    }
+   },
+   "coarsen_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 81.90472089964896,
+     "process_elapsed": 81.95759666699996
+    }
+   },
+   "eval_direct": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 2.449536243453622,
+     "process_elapsed": 2.649399659001574
+    }
+   },
+   "multipole_to_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 200.74160404875875,
+     "process_elapsed": 3850.151302656999
+    }
+   },
+   "eval_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 2.4285690346732736,
+     "process_elapsed": 2.42870935099927
+    }
+   },
+   "form_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 49.42324369773269,
+     "process_elapsed": 856.2110264149997
+    }
+   },
+   "refine_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 59.01435445714742,
+     "process_elapsed": 59.019565048000004
+    }
+   },
+   "eval_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 2.3465470764786005,
+     "process_elapsed": 2.3464720720003243
+    }
+   },
+   "form_global_qbx_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 583.3485450278968,
+     "process_elapsed": 11644.215128819998
+    }
+   },
+   "translate_box_multipoles_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 288.12510890327394,
+     "process_elapsed": 4041.516193227999
+    }
+   },
+   "translate_box_local_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 2.99137853551656,
+     "process_elapsed": 21.6054099139983
+    }
+   },
+   "eval_qbx_expansions": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 22.530053766444325,
+     "process_elapsed": 23.449422669997148
+    }
+   }
+  }
+ },
+ {
+  "geometry": 8,
+  "cost": {
+   "form_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 250.1609484134242,
+     "process_elapsed": 250.17429291099688
+    }
+   },
+   "coarsen_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 170.77950285654515,
+     "process_elapsed": 170.8253386360011
+    }
+   },
+   "eval_direct": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 5.026800296269357,
+     "process_elapsed": 5.370549207997101
+    }
+   },
+   "multipole_to_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 420.94773260410875,
+     "process_elapsed": 8065.5842064430035
+    }
+   },
+   "eval_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 4.844922540709376,
+     "process_elapsed": 4.845157641997503
+    }
+   },
+   "form_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 113.00338318757713,
+     "process_elapsed": 1832.7640040050028
+    }
+   },
+   "refine_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 135.91429284773767,
+     "process_elapsed": 136.00582965899957
+    }
+   },
+   "eval_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 6.064091209322214,
+     "process_elapsed": 6.064484911999898
+    }
+   },
+   "form_global_qbx_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 1325.1784038478509,
+     "process_elapsed": 26441.576772548004
+    }
+   },
+   "translate_box_multipoles_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 643.1790822315961,
+     "process_elapsed": 9230.41031757
+    }
+   },
+   "translate_box_local_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 6.392177104949951,
+     "process_elapsed": 44.76151015800133
+    }
+   },
+   "eval_qbx_expansions": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 47.76154204271734,
+     "process_elapsed": 49.613157657004194
+    }
+   }
+  }
+ },
+ {
+  "geometry": 10,
+  "cost": {
+   "form_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 513.5995461083949,
+     "process_elapsed": 513.6056745129899
+    }
+   },
+   "coarsen_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 352.91369823832065,
+     "process_elapsed": 352.9285161430016
+    }
+   },
+   "eval_direct": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 10.262222395278513,
+     "process_elapsed": 10.919534536005813
+    }
+   },
+   "multipole_to_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 867.7895479593426,
+     "process_elapsed": 16221.278754201005
+    }
+   },
+   "eval_multipoles": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 11.86113151628524,
+     "process_elapsed": 11.861674499989022
+    }
+   },
+   "form_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 233.36520441342145,
+     "process_elapsed": 3698.5887674800033
+    }
+   },
+   "refine_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 273.5916433399543,
+     "process_elapsed": 273.61216822999995
+    }
+   },
+   "eval_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 11.833662376739085,
+     "process_elapsed": 11.834378933999687
+    }
+   },
+   "form_global_qbx_locals": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 2894.070662870072,
+     "process_elapsed": 57635.63231481101
+    }
+   },
+   "translate_box_multipoles_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 1408.2694258093834,
+     "process_elapsed": 20007.329011853
+    }
+   },
+   "translate_box_local_to_qbx_local": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 19.11954547278583,
+     "process_elapsed": 102.5409062569961
+    }
+   },
+   "eval_qbx_expansions": {
+    "_cost_result_type": "TimingResult",
+    "_data": {
+     "wall_elapsed": 99.37802429217845,
+     "process_elapsed": 103.4639662510017
+    }
+   }
+  }
+ }
+]
