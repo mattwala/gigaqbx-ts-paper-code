@@ -17,6 +17,7 @@ from pytential import bind, sym, norm  # noqa
 from pytential.qbx.performance import PerformanceModel
 from pytools import one
 
+
 import logging
 import multiprocessing
 
@@ -61,6 +62,16 @@ DEFAULT_LPOT_KWARGS = dict(
 
 # {{{ general utils
 
+class GeometryGetter(object):
+
+    def __init__(self, getter, label):
+        self.getter = getter
+        self.label = label
+
+    def __call__(self, queue, lpot_kwargs):
+        return self.getter(queue, lpot_kwargs)
+
+
 def lpot_source_from_mesh(queue, mesh, lpot_kwargs=None):
     from meshmode.discretization import Discretization
     from meshmode.discretization.poly_element import (
@@ -104,8 +115,11 @@ def _urchin_lpot_source(k, queue, lpot_kwargs):
     return lpot_source_from_mesh(queue, mesh, lpot_kwargs)
 
 
-def urchin_geometry_getter(k):
-    return partial(_urchin_lpot_source, k)
+def urchin_geometry_getter(k, label=None):
+    if label is None:
+        label = k
+
+    return GeometryGetter(partial(_urchin_lpot_source, k), label)
 
 
 def replicate_along_axes(mesh, shape, sep_ratio):
@@ -141,16 +155,25 @@ def _torus_lpot_source(r_outer, r_inner, n_outer, n_inner, replicant_shape,
     return lpot_source_from_mesh(queue, mesh, lpot_kwargs)
 
 
-def torus_geometry_getter(r_outer, r_inner, n_outer, n_inner):
-    return partial(
-            _torus_lpot_source,
-            r_outer, r_inner,
-            n_outer, n_inner,
-            (1, 1, 1), 0)
+def torus_geometry_getter(r_outer, r_inner, n_outer, n_inner, label):
+    if label is None:
+        label = (r_outer, r_inner, n_outer, n_inner)
+
+    return GeometryGetter(
+            partial(
+                _torus_lpot_source,
+                r_outer, r_inner,
+                n_outer, n_inner,
+                (1, 1, 1), 0),
+            label)
 
 
-def donut_geometry_getter(nrows):
-    return partial(_torus_lpot_source, 2, 1, 40, 20, (2, nrows, 1), 0.1)
+def donut_geometry_getter(nrows, label=None):
+    if label is None:
+        label = nrows
+
+    getter = partial(_torus_lpot_source, 2, 1, 40, 20, (2, nrows, 1), 0.1)
+    return GeometryGetter(getter, label)
 
 
 PARAMS_DIR = "params"
@@ -230,6 +253,118 @@ def get_lpot_cost(which, helmholtz_k, geometry_getter, lpot_kwargs, kind):
 # }}}
 
 
+# {{{ green error getter
+
+def get_green_error(geometry_getter, lpot_kwargs, center, k,
+                    vis_error_filename=None, vis_order=TARGET_ORDER):
+    """Return the Green identity error for a geometry.
+
+    The density function for the Green error is the on-surface restriction of
+    the potential due to a source charge in the exterior of the geometry, whose
+    location is specified. The error is reported relative to the norm of the
+    density.
+
+    Params:
+
+        geometry_getter: Geometry getter
+        lpot_kwargs: Constructor args to QBXLayerPotentialSource
+        center: Center of source charge used to obtain the constructed density
+        k: Helmholtz parameter
+
+    Returns:
+
+        A dictionary containing Green identity errors in l^2 and l^infty norm
+    """
+    context = cl.create_some_context(interactive=False)
+    queue = cl.CommandQueue(context)
+    lpot_source = geometry_getter(queue, lpot_kwargs)
+
+    d = lpot_source.ambient_dim
+
+    u_sym = sym.var("u")
+    dn_u_sym = sym.var("dn_u")
+
+    from sumpy.kernel import LaplaceKernel, HelmholtzKernel
+    lap_k_sym = LaplaceKernel(d)
+    if k == 0:
+        k_sym = lap_k_sym
+        knl_kwargs = {}
+    else:
+        k_sym = HelmholtzKernel(d)
+        knl_kwargs = {"k": sym.var("k")}
+
+    S_part = (
+            sym.S(k_sym, dn_u_sym, qbx_forced_limit=-1, **knl_kwargs))
+
+    D_part = (
+            sym.D(k_sym, u_sym, qbx_forced_limit="avg", **knl_kwargs))
+
+    sym_op = S_part - D_part - 0.5 * u_sym
+
+    density_discr = lpot_source.density_discr
+
+    # {{{ compute values of a solution to the PDE
+
+    nodes_host = density_discr.nodes().get(queue)
+    normal = bind(density_discr, sym.normal(d))(queue).as_vector(np.object)
+    normal_host = [normal[j].get() for j in range(d)]
+
+    if k != 0:
+        if d == 2:
+            angle = 0.3
+            wave_vec = np.array([np.cos(angle), np.sin(angle)])
+            u = np.exp(1j*k*np.tensordot(wave_vec, nodes_host, axes=1))
+            grad_u = 1j*k*wave_vec[:, np.newaxis]*u
+        else:
+            diff = nodes_host - center[:, np.newaxis]
+            r = la.norm(diff, axis=0)
+            u = np.exp(1j*k*r) / r
+            grad_u = diff * (1j*k*u/r - u/r**2)
+    else:
+        diff = nodes_host - center[:, np.newaxis]
+        dist_squared = np.sum(diff**2, axis=0)
+        dist = np.sqrt(dist_squared)
+        if d == 2:
+            u = np.log(dist)
+            grad_u = diff/dist_squared
+        elif d == 3:
+            u = 1/dist
+            grad_u = -diff/dist**3
+        else:
+            assert False
+
+    dn_u = 0
+    for i in range(d):
+        dn_u = dn_u + normal_host[i]*grad_u[i]
+
+    # }}}
+
+    u_dev = cl.array.to_device(queue, u)
+    dn_u_dev = cl.array.to_device(queue, dn_u)
+    grad_u_dev = cl.array.to_device(queue, grad_u)
+
+    bound_op = bind(lpot_source, sym_op)
+    error = bound_op(queue, u=u_dev, dn_u=dn_u_dev, grad_u=grad_u_dev, k=k)
+
+    scaling_l2 = 1 / norm(density_discr, queue, u_dev, p=2)
+    scaling_linf = 1 / norm(density_discr, queue, u_dev, p="inf")
+
+    if vis_error_filename is not None:
+        from meshmode.discretization.visualization import make_visualizer
+        bdry_vis = make_visualizer(queue, lpot_source.density_discr, vis_order)
+        bdry_vis.write_vtk_file(vis_error_filename, [
+            ("green_zero", error),
+            ("u_dev", u_dev),
+            ])
+
+    err_l2 = scaling_l2 * norm(density_discr, queue, error, p=2)
+    err_linf = scaling_linf * norm(density_discr, queue, error, p="inf")
+
+    return dict(err_l2=err_l2, err_linf=err_linf)
+
+# }}}
+
+
 # {{{ parameter study - vary parameter with constant geometry
 
 def run_parameter_study(
@@ -290,8 +425,7 @@ def get_optimal_parameter_value(results):
 
 # {{{ geometry study - vary geometry with constant parameters
 
-def run_geometry_study(
-        geometry_getters, geometry_labels, lpot_kwargs, which_op, helmholtz_k):
+def run_geometry_study(geometry_getters, lpot_kwargs, which_op, helmholtz_k):
     """Run the cost model over a set of geometries.
 
     Params:
@@ -314,9 +448,46 @@ def run_geometry_study(
 
     results = [
             {
-                "geometry": label,
+                "geometry": geo.label,
                 "cost": cost}
-            for label, cost in zip(geometry_labels, results)]
+            for geo, cost in zip(geometry_getters, results)]
+
+    return results
+
+# }}}
+
+
+# {{{ green error study - obtain green error for a geometry family
+
+def run_green_error_study(
+        geometry_getters, lpot_kwargs, center, helmholtz_k):
+    """Compute the Green error for a family of geometries, in parallel.
+
+    Params:
+
+        geometry_getters: Geometry getters
+        geometry_label: Geometry labels in output
+        lpot_kwargs: Constructor kwargs to QBXLayerPotentialSource
+        center: Center used for constructed density
+        helmholtz_k: Helmholtz parameter
+
+    Returns:
+
+        A list of dictionaries, each of which contain a geometry label and an
+        error result
+    """
+    with multiprocessing.Pool(POOL_WORKERS) as pool:
+        err_results = pool.map(
+                partial(
+                    get_green_error,
+                    lpot_kwargs=lpot_kwargs, center=center, k=helmholtz_k),
+                geometry_getters)
+
+    results = [
+            {
+                "geometry": geo.label,
+                "error": err}
+            for geo, err in zip(geometry_getters, err_results)]
 
     return results
 
@@ -326,7 +497,7 @@ def run_geometry_study(
 # {{{ tune parameters for a single geometry
 
 def run_tuning_study(
-        tuning_geometry, label, lpot_kwargs, baseline_nmax_range,
+        tuning_geometry, lpot_kwargs, baseline_nmax_range,
         baseline_nmpole_range, tsqbx_nmax_range,
         tsqbx_nmpole_range, which_op, helmholtz_k):
     """Find the parameters which give the best observed performance, with and
@@ -345,6 +516,7 @@ def run_tuning_study(
         are to be checked for the respective parameter value.
     """
     lpot_kwargs = lpot_kwargs.copy()
+    label = tuning_geometry.label
 
     # {{{ figure out baseline nmax
 
@@ -451,8 +623,7 @@ def run_tuning_study(
 # {{{ collect results of applying optimizations on a set of geometries
 
 def run_optimization_study(
-        geometry_getters, geometry_labels,
-        label, lpot_kwargs, params, which_op, helmholtz_k):
+        geometry_getters, label, lpot_kwargs, params, which_op, helmholtz_k):
     """Apply a sequence of optimizations to a set of geometries and record
     performance results.
 
@@ -479,7 +650,6 @@ def run_optimization_study(
 
     opt0_results = run_geometry_study(
             geometry_getters,
-            geometry_labels,
             lpot_kwargs,
             which_op,
             helmholtz_k)
@@ -498,7 +668,6 @@ def run_optimization_study(
 
     opt1_results = run_geometry_study(
             geometry_getters,
-            geometry_labels,
             lpot_kwargs,
             which_op,
             helmholtz_k)
@@ -517,7 +686,6 @@ def run_optimization_study(
 
     opt2_results = run_geometry_study(
             geometry_getters,
-            geometry_labels,
             lpot_kwargs,
             which_op,
             helmholtz_k)
@@ -539,7 +707,6 @@ def run_optimization_study(
 
     opt3_results = run_geometry_study(
             geometry_getters,
-            geometry_labels,
             lpot_kwargs,
             which_op,
             helmholtz_k)
@@ -563,8 +730,7 @@ def run_urchin_time_prediction_experiment():
     lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
     lpot_kwargs["performance_model"] = perf_model
 
-    results = run_geometry_study(
-            urchins, URCHIN_PARAMS, lpot_kwargs, "S", 0)
+    results = run_geometry_study(urchins, lpot_kwargs, "S", 0)
 
     with make_output_file("time-prediction-urchin-modeled-costs.json")\
             as outfile:
@@ -576,7 +742,7 @@ def run_urchin_tuning_study_experiment():
             calibration_params=load_params(
                 "calibration-params-urchin-S.json"))
 
-    tuning_urchin = urchin_geometry_getter(TUNING_URCHIN)
+    tuning_urchin = urchin_geometry_getter(TUNING_URCHIN, "urchin")
 
     lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
     lpot_kwargs["qbx_order"] = 5
@@ -589,7 +755,7 @@ def run_urchin_tuning_study_experiment():
     tsqbx_nmpole_range = range(0, 300, 20)
 
     run_tuning_study(
-            tuning_urchin, "urchin", lpot_kwargs,
+            tuning_urchin, lpot_kwargs,
             baseline_nmax_range, baseline_nmpole_range,
             tsqbx_nmax_range, tsqbx_nmpole_range,
             which_op="S", helmholtz_k=0)
@@ -610,8 +776,20 @@ def run_urchin_optimization_study_experiment():
     urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
 
     run_optimization_study(
-            urchins, URCHIN_PARAMS, "urchin", lpot_kwargs,
+            urchins, "urchin", lpot_kwargs,
             tuning_params, "S", 0)
+
+
+def run_urchin_green_error_experiment():
+    urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+    center = np.array([3., 1., 2.])
+
+    results = run_green_error_study(
+            urchins, lpot_kwargs, center, helmholtz_k=0)
+
+    with make_output_file("green-error-urchin.json") as outfile:
+        output_data(results, outfile)
 
 
 def run_donut_tuning_study_experiment():
@@ -619,7 +797,7 @@ def run_donut_tuning_study_experiment():
             calibration_params=load_params(
                 "calibration-params-donut.json"))
 
-    tuning_donut = donut_geometry_getter(5)
+    tuning_donut = donut_geometry_getter(5, "donut")
 
     lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
     lpot_kwargs["qbx_order"] = 9
@@ -632,7 +810,7 @@ def run_donut_tuning_study_experiment():
     tsqbx_nmpole_range = range(0, 300, 20)
 
     run_tuning_study(
-            tuning_donut, "donut", lpot_kwargs,
+            tuning_donut, lpot_kwargs,
             baseline_nmax_range, baseline_nmpole_range,
             tsqbx_nmax_range, tsqbx_nmpole_range,
             which_op="S", helmholtz_k=0)
@@ -647,25 +825,29 @@ def run_experiments(experiments):
     if "urchin-tuning-study" in experiments:
         run_urchin_tuning_study_experiment()
 
-    # Tuning study for torus grid
-    if "donut-tuning-study" in experiments:
-        run_donut_tuning_study_experiment()
-
     # Optimization study for urchin family
     if "urchin-optimization-study" in experiments:
         run_urchin_optimization_study_experiment()
+
+    # Optimization study for urchin family
+    if "urchin-green-error" in experiments:
+        run_urchin_green_error_experiment()
+
+    # Tuning study for torus grid
+    if "donut-tuning-study" in experiments:
+        run_donut_tuning_study_experiment()
 
 
 EXPERIMENTS = (
         "urchin-time-prediction",
         "urchin-tuning-study",
         "urchin-optimization-study",
-        "urchin-green-accuracy",
+        "urchin-green-error",
         "donut-tuning-study",
         "donut-optimization-study",
-        "donut-green-accuracy",
+        "donut-green-error",
         "plane-optimization-study",
-        "plane-bvp-accuracy",
+        "plane-bvp-error",
 )
 
 
