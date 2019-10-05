@@ -586,7 +586,7 @@ def run_urchin_tuning_study_experiment():
     baseline_nmax_range = range(32, 512, 32)
     baseline_nmpole_range = range(0, 300, 20)
     tsqbx_nmax_range = range(32, 2000, 64)
-    tsqbx_nmpole_range = range(0, 300, 20)
+    tsqbx_nmpole_range = range(0, 500, 20)
 
     run_tuning_study(
             tuning_urchin, "urchin", lpot_kwargs,
@@ -619,6 +619,7 @@ def run_donut_tuning_study_experiment():
             calibration_params=load_params(
                 "calibration-params-donut.json"))
 
+    # 5 = tau_{10}
     tuning_donut = donut_geometry_getter(5)
 
     lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
@@ -629,13 +630,32 @@ def run_donut_tuning_study_experiment():
     baseline_nmax_range = range(32, 512, 32)
     baseline_nmpole_range = range(0, 300, 20)
     tsqbx_nmax_range = range(32, 2000, 64)
-    tsqbx_nmpole_range = range(0, 300, 20)
+    tsqbx_nmpole_range = range(0, 500, 20)
 
     run_tuning_study(
             tuning_donut, "donut", lpot_kwargs,
             baseline_nmax_range, baseline_nmpole_range,
             tsqbx_nmax_range, tsqbx_nmpole_range,
             which_op="S", helmholtz_k=0)
+
+
+def run_donut_optimization_study_experiment():
+    tuning_params = load_params("tuning-params-donut.json")
+
+    perf_model = PerformanceModel(
+            calibration_params=load_params(
+                "calibration-params-donut.json"))
+
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+    lpot_kwargs["qbx_order"] = 9
+    lpot_kwargs["fmm_order"] = 20
+    lpot_kwargs["performance_model"] = perf_model
+
+    donut = [donut_geometry_getter(5)]
+
+    run_optimization_study(
+            donut, [5], "donut", lpot_kwargs,
+            tuning_params, "S", 0)
 
 
 def run_experiments(experiments):
@@ -655,15 +675,21 @@ def run_experiments(experiments):
     if "urchin-optimization-study" in experiments:
         run_urchin_optimization_study_experiment()
 
+    # Optimization study for donut
+    if "donut-optimization-study" in experiments:
+        run_donut_optimization_study_experiment()
+
 
 EXPERIMENTS = (
         "urchin-time-prediction",
         "urchin-tuning-study",
         "urchin-optimization-study",
         "urchin-green-accuracy",
+
         "donut-tuning-study",
         "donut-optimization-study",
         "donut-green-accuracy",
+
         "plane-optimization-study",
         "plane-bvp-accuracy",
 )
