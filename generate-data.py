@@ -176,6 +176,11 @@ def donut_geometry_getter(nrows, label=None):
     return GeometryGetter(getter, label)
 
 
+def plane_geometry_getter(label="plane"):
+    from inteq_tests import plane_lpot_source
+    return GeometryGetter(plane_lpot_source, label)
+
+
 PARAMS_DIR = "params"
 OUTPUT_DIR = "raw-data"
 
@@ -720,17 +725,55 @@ def run_optimization_study(
 # }}}
 
 
-def run_urchin_time_prediction_experiment():
-    perf_model = PerformanceModel(
+# {{{ lpot kwargs
+
+def urchin_lpot_kwargs():
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+
+    lpot_kwargs["performance_model"] = PerformanceModel(
             calibration_params=load_params(
                 "calibration-params-urchin.json"))
 
+    assert lpot_kwargs["fmm_order"] == 15
+    assert lpot_kwargs["qbx_order"] == 5
+
+    return lpot_kwargs
+
+
+def donut_lpot_kwargs():
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+
+    lpot_kwargs["performance_model"] = PerformanceModel(
+            calibration_params=load_params(
+                "calibration-params-donut.json"))
+
+    lpot_kwargs["fmm_order"] = 20
+    lpot_kwargs["qbx_order"] = 9
+
+    return lpot_kwargs
+
+
+def plane_lpot_kwargs():
+    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
+
+    lpot_kwargs["performance_model"] = PerformanceModel(
+            calibration_params=load_params(
+                "calibration-params-plane.json"))
+
+    # These are supplied by the geometry getter.
+    del lpot_kwargs["qbx_order"]
+    del lpot_kwargs["fmm_order"]
+    del lpot_kwargs["fmm_backend"]
+
+    return lpot_kwargs
+
+# }}}
+
+
+def run_urchin_time_prediction_experiment():
     urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
 
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-    lpot_kwargs["performance_model"] = perf_model
-
-    results = run_geometry_study(urchins, lpot_kwargs, "S", 0)
+    results = run_geometry_study(urchins, urchin_lpot_kwargs(), "S", 0)
 
     with make_output_file("time-prediction-urchin-modeled-costs.json")\
             as outfile:
@@ -738,16 +781,7 @@ def run_urchin_time_prediction_experiment():
 
 
 def run_urchin_tuning_study_experiment():
-    perf_model = PerformanceModel(
-            calibration_params=load_params(
-                "calibration-params-urchin-S.json"))
-
     tuning_urchin = urchin_geometry_getter(TUNING_URCHIN, "urchin")
-
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-    lpot_kwargs["qbx_order"] = 5
-    lpot_kwargs["fmm_order"] = 15
-    lpot_kwargs["performance_model"] = perf_model
 
     baseline_nmax_range = range(32, 512, 32)
     baseline_nmpole_range = range(0, 300, 20)
@@ -755,7 +789,7 @@ def run_urchin_tuning_study_experiment():
     tsqbx_nmpole_range = range(0, 500, 20)
 
     run_tuning_study(
-            tuning_urchin, lpot_kwargs,
+            tuning_urchin, urchin_lpot_kwargs(),
             baseline_nmax_range, baseline_nmpole_range,
             tsqbx_nmax_range, tsqbx_nmpole_range,
             which_op="S", helmholtz_k=0)
@@ -764,46 +798,27 @@ def run_urchin_tuning_study_experiment():
 def run_urchin_optimization_study_experiment():
     tuning_params = load_params("tuning-params-urchin.json")
 
-    perf_model = PerformanceModel(
-            calibration_params=load_params(
-                "calibration-params-urchin.json"))
-
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-    lpot_kwargs["qbx_order"] = 5
-    lpot_kwargs["fmm_order"] = 15
-    lpot_kwargs["performance_model"] = perf_model
-
     urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
 
     run_optimization_study(
-            urchins, "urchin", lpot_kwargs,
-            tuning_params, "S", 0)
+            urchins, "urchin", urchin_lpot_kwargs(),
+            tuning_params, "S", helmholtz_k=0)
 
 
 def run_urchin_green_error_experiment():
     urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
     center = np.array([3., 1., 2.])
 
     results = run_green_error_study(
-            urchins, lpot_kwargs, center, helmholtz_k=0)
+            urchins, urchin_lpot_kwargs(), center, helmholtz_k=0)
 
     with make_output_file("green-error-urchin.json") as outfile:
         output_data(results, outfile)
 
 
 def run_donut_tuning_study_experiment():
-    perf_model = PerformanceModel(
-            calibration_params=load_params(
-                "calibration-params-donut.json"))
-
-    # 5 = tau_{10}
+    # nrows=5 is the same as tau_{10}
     tuning_donut = donut_geometry_getter(5, "donut")
-
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-    lpot_kwargs["qbx_order"] = 9
-    lpot_kwargs["fmm_order"] = 20
-    lpot_kwargs["performance_model"] = perf_model
 
     baseline_nmax_range = range(32, 512, 32)
     baseline_nmpole_range = range(0, 300, 20)
@@ -811,7 +826,7 @@ def run_donut_tuning_study_experiment():
     tsqbx_nmpole_range = range(0, 500, 20)
 
     run_tuning_study(
-            tuning_donut, lpot_kwargs,
+            tuning_donut, donut_lpot_kwargs(),
             baseline_nmax_range, baseline_nmpole_range,
             tsqbx_nmax_range, tsqbx_nmpole_range,
             which_op="S", helmholtz_k=0)
@@ -819,35 +834,37 @@ def run_donut_tuning_study_experiment():
 
 def run_donut_optimization_study_experiment():
     tuning_params = load_params("tuning-params-donut.json")
-
-    perf_model = PerformanceModel(
-            calibration_params=load_params(
-                "calibration-params-donut.json"))
-
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-    lpot_kwargs["qbx_order"] = 9
-    lpot_kwargs["fmm_order"] = 20
-    lpot_kwargs["performance_model"] = perf_model
-
     donut = [donut_geometry_getter(5)]
 
     run_optimization_study(
-            donut, "donut", lpot_kwargs,
-            tuning_params, "S", 0)
+            donut, "donut", donut_lpot_kwargs(),
+            tuning_params, "S", helmholtz_k=0)
 
 
 def run_donut_green_error_experiment():
     donut = [donut_geometry_getter(5)]
-    lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-    lpot_kwargs["qbx_order"] = 9
-    lpot_kwargs["fmm_order"] = 20
     center = np.array([0.] * 3)
 
     results = run_green_error_study(
-            donut, lpot_kwargs, center, helmholtz_k=0)
+            donut, donut_lpot_kwargs(), center, helmholtz_k=0)
 
     with make_output_file("green-error-donut.json") as outfile:
         output_data(results, outfile)
+
+
+def run_plane_tuning_study_experiment():
+    tuning_plane = plane_geometry_getter()
+
+    baseline_nmax_range=range(50, 200, 50)
+    baseline_nmpole_range=range(10, 100, 10)
+    tsqbx_nmax_range=range(100, 500, 50)
+    tsqbx_nmpole_range=range(50, 300, 50)
+
+    run_tuning_study(
+            tuning_plane, plane_lpot_kwargs(),
+            baseline_nmax_range, baseline_nmpole_range,
+            tsqbx_nmax_range, tsqbx_nmpole_range,
+            which_op="D", helmholtz_k=20)
 
 
 def run_experiments(experiments):
@@ -879,6 +896,10 @@ def run_experiments(experiments):
     if "donut-green-error" in experiments:
         run_donut_green_error_experiment()
 
+    # Plane tuning study
+    if "plane-tuning-study" in experiments:
+        run_plane_tuning_study_experiment()
+
 
 EXPERIMENTS = (
         "urchin-time-prediction",
@@ -890,6 +911,7 @@ EXPERIMENTS = (
         "donut-optimization-study",
         "donut-green-error",
 
+        "plane-tuning-study",
         "plane-optimization-study",
         "plane-bvp-error",
 )
