@@ -1,0 +1,6 @@
+{
+ "baseline_nmax": 100,
+ "baseline_nmpole": 40,
+ "tsqbx_nmax": 300,
+ "tsqbx_nmpole": 150
+}
