@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Integral equation test infrastructure"""
+
 from __future__ import division, absolute_import, print_function
 
 __copyright__ = "Copyright (C) 2014 Andreas Kloeckner"
@@ -462,13 +464,6 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
 
     rhs = bind(density_discr, op.prepare_rhs(sym.var("bc")))(queue, bc=bc)
 
-    it = 0
-    def nan_callback(r):
-        nonlocal it
-        if np.isnan(r[0].get()).any():
-            raise ValueError("NaN after iteration", it)
-        it += 1
-
     try:
         from pytential.solve import gmres
         gmres_result = gmres(
@@ -477,7 +472,6 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
                 tol=case.gmres_tol,
                 progress=True,
                 hard_failure=True,
-                callback=nan_callback,
                 stall_iterations=50, no_progress_factor=1.05)
     except QBXTargetAssociationFailedException as e:
         bdry_vis = make_visualizer(queue, density_discr, case.target_order+3)
@@ -487,7 +481,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
             ])
         raise
 
-    logger.info("gmres state:", gmres_result.state)
+    logger.info("gmres state: %s", gmres_result.state)
     weighted_u = gmres_result.solution
 
     # }}}
@@ -696,7 +690,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
 
 # {{{ test frontend
 
-SphereHelmholtzDirichletTest = SphereIntEqTestCase(20, "dirichlet", +1)
+SphereHelmholtzDirichletTest = SphereIntEqTestCase(5, "dirichlet", +1)
 
 
 @pytest.mark.parametrize(
@@ -707,7 +701,9 @@ def test_integral_equation(ctx_getter, case, visualize=False):
     queue = cl.CommandQueue(cl_ctx)
 
     from pytools.convergence import EOCRecorder
-    logger.info("qbx_order: %d, %s" % (case.qbx_order, case))
+    print("qbx_order: %d, %s" % (case.qbx_order, case))
+
+    lpot_kwargs = {"_use_target_specific_qbx": True}
 
     eoc_rec_target = EOCRecorder()
     eoc_rec_td = EOCRecorder()
@@ -715,7 +711,7 @@ def test_integral_equation(ctx_getter, case, visualize=False):
     have_error_data = False
     for resolution in case.resolutions:
         result = run_int_eq_test(cl_ctx, queue, case, resolution,
-                visualize=visualize)
+                visualize=visualize, lpot_kwargs=lpot_kwargs)
 
         if result.rel_err_2 is not None:
             have_error_data = True
@@ -732,13 +728,13 @@ def test_integral_equation(ctx_getter, case, visualize=False):
         assert False
 
     if have_error_data:
-        logger.info("TARGET ERROR:")
-        logger.info(eoc_rec_target)
+        print("TARGET ERROR:")
+        print(eoc_rec_target)
         assert eoc_rec_target.order_estimate() > tgt_order - 1.3
 
         if case.check_tangential_deriv:
-            logger.info("TANGENTIAL DERIVATIVE ERROR:")
-            logger.info(eoc_rec_td)
+            print("TANGENTIAL DERIVATIVE ERROR:")
+            print(eoc_rec_td)
             assert eoc_rec_td.order_estimate() > tgt_order - 2.3
 
 # }}}
@@ -760,5 +756,4 @@ def sphere_lpot_source(queue, lpot_kwargs):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    test_integral_equation(cl._csc, SphereHelmholtzDirichletTest)
-    #pytest.main([__file__])
+    pytest.main([__file__])
