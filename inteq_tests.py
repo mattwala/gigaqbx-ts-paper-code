@@ -42,7 +42,6 @@ from meshmode.mesh.generation import (  # noqa
 from meshmode.discretization.visualization import make_visualizer
 from pytential import bind, sym
 from pytential.qbx import QBXTargetAssociationFailedException
-from pytential.qbx.performance import PerformanceModel
 from pyopencl.tools import pytest_generate_tests_for_pyopencl as pytest_generate_tests  # noqa
 
 
@@ -57,12 +56,15 @@ except ImportError:
     pass
 
 
-def make_circular_point_group(ambient_dim, npoints, radius,
+def make_circular_point_group(
+        ambient_dim, npoints, radius,
         center=np.array([0., 0.]), func=lambda x: x):
     t = func(np.linspace(0, 1, npoints, endpoint=False)) * (2 * np.pi)
     center = np.asarray(center)
     result = np.zeros((ambient_dim, npoints))
-    result[:2, :] = center[:, np.newaxis] + radius*np.vstack((np.cos(t), np.sin(t)))
+    result[:2, :] = (
+            center[:, np.newaxis]
+            + radius*np.vstack((np.cos(t), np.sin(t))))
     return result
 
 
@@ -86,10 +88,12 @@ class IntEqTestCase:
         return self.helmholtz_k
 
     def __str__(self):
-        return ("name: %s, bc_type: %s, prob_side: %s, "
+        return (
+                "name: %s, bc_type: %s, prob_side: %s, "
                 "helmholtz_k: %s, qbx_order: %d, target_order: %d"
-            % (self.name, self.bc_type, self.prob_side, self.helmholtz_k,
-                self.qbx_order, self.target_order))
+                % (
+                    self.name, self.bc_type, self.prob_side, self.helmholtz_k,
+                    self.qbx_order, self.target_order))
 
     fmm_backend = "sumpy"
     gmres_tol = 1e-14
@@ -255,8 +259,9 @@ def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
 
     from pytential.qbx import QBXLayerPotentialSource
     from meshmode.discretization import Discretization
-    from meshmode.discretization.poly_element import \
-            InterpolatoryQuadratureSimplexGroupFactory
+    from meshmode.discretization.poly_element import (
+            InterpolatoryQuadratureSimplexGroupFactory)
+
     pre_density_discr = Discretization(
             cl_ctx, mesh,
             InterpolatoryQuadratureSimplexGroupFactory(case.target_order))
@@ -271,7 +276,8 @@ def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
         qbx_lpot_kwargs["fmm_order"] = False
     else:
         if hasattr(case, "fmm_tol"):
-            from sumpy.expansion.level_to_order import SimpleExpansionOrderFinder
+            from sumpy.expansion.level_to_order import\
+                    SimpleExpansionOrderFinder
             qbx_lpot_kwargs["fmm_level_to_order"] = SimpleExpansionOrderFinder(
                     case.fmm_tol)
 
@@ -302,15 +308,20 @@ def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
         if hasattr(case, "refinement_maxiter"):
             refiner_extra_kwargs["maxiter"] = case.refinement_maxiter
 
-        logger.info("%d elements before refinement" % pre_density_discr.mesh.nelements)
+        logger.info(
+                "%d elements before refinement",
+                pre_density_discr.mesh.nelements)
         qbx, _ = qbx.with_refinement(**refiner_extra_kwargs)
 
-        logger.info("%d stage-1 elements after refinement"
-                % qbx.density_discr.mesh.nelements)
-        logger.info("%d stage-2 elements after refinement"
-                % qbx.stage2_density_discr.mesh.nelements)
-        logger.info("quad stage-2 elements have %d nodes"
-                % qbx.quad_stage2_density_discr.groups[0].nunit_nodes)
+        logger.info(
+                "%d stage-1 elements after refinement",
+                qbx.density_discr.mesh.nelements)
+        logger.info(
+                "%d stage-2 elements after refinement",
+                qbx.stage2_density_discr.mesh.nelements)
+        logger.info(
+                "quad stage-2 elements have %d nodes",
+                qbx.quad_stage2_density_discr.groups[0].nunit_nodes)
 
     return qbx
 
@@ -319,7 +330,8 @@ def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
 
 # {{{ test backend
 
-def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None):
+def run_int_eq_test(
+        cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None):
     if lpot_kwargs is None:
         lpot_kwargs = {}
     qbx = lpot_source_from_case(cl_ctx, queue, case, resolution, lpot_kwargs)
@@ -327,7 +339,9 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
     density_discr = qbx.density_discr
     mesh = density_discr.mesh
 
-    if visualize and hasattr(case, "visualize_geometry") and case.visualize_geometry:
+    if (
+            visualize
+            and getattr(case, "visualize_geometry", False)):
         bdry_normals = bind(
                 density_discr, sym.normal(mesh.ambient_dim)
                 )(queue).as_vector(dtype=object)
@@ -344,17 +358,22 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
             # show geometry, centers, normals
             nodes_h = density_discr.nodes().get(queue=queue)
             pt.plot(nodes_h[0], nodes_h[1], "x-")
-            normal = bind(density_discr, sym.normal(2))(queue).as_vector(np.object)
-            pt.quiver(nodes_h[0], nodes_h[1],
+            normal = (
+                    bind(density_discr, sym.normal(2))(queue)
+                    ).as_vector(np.object)
+            pt.quiver(
+                    nodes_h[0], nodes_h[1],
                     normal[0].get(queue), normal[1].get(queue))
             pt.gca().set_aspect("equal")
             pt.show()
 
         elif mesh.ambient_dim == 3:
-            bdry_vis = make_visualizer(queue, density_discr, case.target_order+3)
+            bdry_vis = make_visualizer(
+                    queue, density_discr, case.target_order+3)
 
-            bdry_normals = bind(density_discr, sym.normal(3))(queue)\
-                    .as_vector(dtype=object)
+            bdry_normals = (
+                    bind(density_discr, sym.normal(3))(queue)
+                    ).as_vector(dtype=object)
 
             bdry_vis.write_vtk_file("pre-solve-source-%s.vtu" % resolution, [
                 ("bdry_normals", bdry_normals),
@@ -389,11 +408,13 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
     loc_sign = +1 if case.prob_side in [+1, "scat"] else -1
 
     if case.bc_type == "dirichlet":
-        op = DirichletOperator(knl, loc_sign, use_l2_weighting=True,
+        op = DirichletOperator(
+                knl, loc_sign, use_l2_weighting=True,
                 kernel_arguments=knl_kwargs)
     elif case.bc_type == "neumann":
-        op = NeumannOperator(knl, loc_sign, use_l2_weighting=True,
-                 use_improved_operator=False, kernel_arguments=knl_kwargs)
+        op = NeumannOperator(
+                knl, loc_sign, use_l2_weighting=True,
+                use_improved_operator=False, kernel_arguments=knl_kwargs)
     else:
         assert False
 
@@ -490,7 +511,8 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
         # {{{ error check
 
         points_target = PointsTarget(test_targets)
-        bound_tgt_op = bind((qbx, points_target),
+        bound_tgt_op = bind(
+                (qbx, points_target),
                 op.representation(sym.var("u")))
 
         test_via_bdry = bound_tgt_op(queue, u=weighted_u, k=case.k)
@@ -526,13 +548,14 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
     # {{{ test gradient
 
     if case.check_gradient and case.prob_side != "scat":
-        bound_grad_op = bind((qbx, points_target),
+        bound_grad_op = bind(
+                (qbx, points_target),
                 op.representation(
                     sym.var("u"),
                     map_potentials=lambda pot: sym.grad(mesh.ambient_dim, pot),
                     qbx_forced_limit=None))
 
-        #logger.info(bound_t_deriv_op.code)
+        # logger.info(bound_t_deriv_op.code)
 
         grad_from_src = bound_grad_op(
                 queue, u=weighted_u, **concrete_knl_kwargs)
@@ -557,13 +580,14 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
     # {{{ test tangential derivative
 
     if case.check_tangential_deriv and case.prob_side != "scat":
-        bound_t_deriv_op = bind(qbx,
+        bound_t_deriv_op = bind(
+                qbx,
                 op.representation(
                     sym.var("u"),
-                    map_potentials=lambda pot: sym.tangential_derivative(2, pot),
+                    map_potentials=partial(sym.tangential_derivative, 2),
                     qbx_forced_limit=loc_sign))
 
-        #logger.info(bound_t_deriv_op.code)
+        # logger.info(bound_t_deriv_op.code)
 
         tang_deriv_from_src = bound_t_deriv_op(
                 queue, u=weighted_u, **concrete_knl_kwargs).as_scalar().get()
@@ -581,7 +605,9 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
 
         td_err = (tang_deriv_from_src - tang_deriv_ref)
 
-        rel_td_err_inf = la.norm(td_err, np.inf)/la.norm(tang_deriv_ref, np.inf)
+        rel_td_err_inf = (
+                la.norm(td_err, np.inf)
+                / la.norm(tang_deriv_ref, np.inf))
 
         logger.info("rel_td_err_inf: %g" % rel_td_err_inf)
 
@@ -595,8 +621,10 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
     if visualize:
         bdry_vis = make_visualizer(queue, density_discr, case.target_order+3)
 
-        bdry_normals = bind(density_discr, sym.normal(qbx.ambient_dim))(queue)\
-                .as_vector(dtype=object)
+        bdry_normals = (
+                bind(
+                    density_discr, sym.normal(qbx.ambient_dim))(queue)
+                ).as_vector(dtype=object)
 
         sym_sqrt_j = sym.sqrt_jac_q_weight(density_discr.ambient_dim)
         u = bind(density_discr, sym.var("u")/sym_sqrt_j)(queue, u=weighted_u)
@@ -604,7 +632,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
         bdry_vis.write_vtk_file("source-%s.vtu" % resolution, [
             ("u", u),
             ("bc", bc),
-            #("bdry_normals", bdry_normals),
+            # ("bdry_normals", bdry_normals),
             ])
 
         from sumpy.visualization import make_field_plotter_from_bbox  # noqa
@@ -641,19 +669,21 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
         from sumpy.kernel import LaplaceKernel
         ones_density = density_discr.zeros(queue)
         ones_density.fill(1)
-        indicator = bind(
-                (qbx_tgt_tol, PointsTarget(fplot.points)),
-                -sym.D(LaplaceKernel(density_discr.ambient_dim),
+        indicator_func = bind(
+                (
+                    qbx_tgt_tol, PointsTarget(fplot.points)),
+                -sym.D(
+                    LaplaceKernel(density_discr.ambient_dim),
                     sym.var("sigma"),
-                    qbx_forced_limit=None))(
-                queue, sigma=ones_density).get()
+                    qbx_forced_limit=None))
+        indicator = indicator_func(queue, sigma=ones_density).get()
 
         solved_pot = solved_pot.get()
 
         true_pot = bind((point_source, PointsTarget(fplot.points)), pot_src)(
                 queue, charges=source_charges_dev, **concrete_knl_kwargs).get()
 
-        #fplot.show_scalar_in_mayavi(solved_pot.real, max_val=5)
+        # fplot.show_scalar_in_mayavi(solved_pot.real, max_val=5)
         if case.prob_side == "scat":
             fplot.write_vtk_file(
                     "potential-%s.vts" % resolution,
@@ -710,7 +740,8 @@ def test_integral_equation(ctx_getter, case, visualize=False):
 
     have_error_data = False
     for resolution in case.resolutions:
-        result = run_int_eq_test(cl_ctx, queue, case, resolution,
+        result = run_int_eq_test(
+                cl_ctx, queue, case, resolution,
                 visualize=visualize, lpot_kwargs=lpot_kwargs)
 
         if result.rel_err_2 is not None:
