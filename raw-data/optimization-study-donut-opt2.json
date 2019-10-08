@@ -1,0 +1,56 @@
+[
+ {
+  "geometry": 5,
+  "cost": {
+   "_cost_result_type": "ParametrizedCosts",
+   "_data": {
+    "params": {
+     "nlevels": 10,
+     "nboxes": 110488,
+     "nsources": 18880000,
+     "ntargets": 2160000,
+     "ncenters": 1440000,
+     "p_qbx": 9,
+     "p_fmm_lev0": 20,
+     "p_fmm_lev1": 20,
+     "p_fmm_lev2": 20,
+     "p_fmm_lev3": 20,
+     "p_fmm_lev4": 20,
+     "p_fmm_lev5": 20,
+     "p_fmm_lev6": 20,
+     "p_fmm_lev7": 20,
+     "p_fmm_lev8": 20,
+     "p_fmm_lev9": 20,
+     "c_p2m": 1.134504551992058e-08,
+     "c_qbxl2p": 2.4878004779164556e-07,
+     "c_l2l": 4.120079881914911e-09,
+     "c_m2m": 3.723756962756279e-09,
+     "c_m2qbxl": 3.0738844361924972e-09,
+     "c_l2qbxl": 4.0383818952867626e-09,
+     "c_p2l": 1.054976737672154e-08,
+     "c_p2qbxl": 1.2139798333861967e-08,
+     "c_m2l": 2.891727229631207e-09,
+     "c_p2p_tsqbx": 9.10455513678772e-09
+    },
+    "raw_costs": {
+     "form_multipoles": "(Sum (Product 2800 (Var 'c_p2m') (Power (Sum (Var 'p_fmm_lev4') 1) 2)) (Product 13562 (Var 'c_p2m') (Power (Sum (Var 'p_fmm_lev5') 1) 2)) (Product 183624 (Var 'c_p2m') (Power (Sum (Var 'p_fmm_lev6') 1) 2)) (Product 2278277 (Var 'c_p2m') (Power (Sum (Var 'p_fmm_lev7') 1) 2)) (Product 15990751 (Var 'c_p2m') (Power (Sum (Var 'p_fmm_lev8') 1) 2)) (Product 410986 (Var 'c_p2m') (Power (Sum (Var 'p_fmm_lev9') 1) 2)))",
+     "coarsen_multipoles": "(Sum (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev8') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5)) 2564) (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev7') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5)) 77773) (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev6') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5)) 23538) (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev5') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5)) 5265) (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev4') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5)) 1089) (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev3') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 1.5)) 216) (Product (Var 'c_m2m') (Sum (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev2') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 1.5)) 32))",
+     "eval_direct_list1": "0",
+     "eval_direct_list3": "0",
+     "eval_direct_list4": "0",
+     "multipole_to_local": "(Sum (Product 8 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev2') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 1.5))) (Product 420 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev3') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 1.5))) (Product 14988 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev4') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5))) (Product 149990 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev5') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5))) (Product 1215792 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev6') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5))) (Product 5167500 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev7') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5))) (Product 12089033 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev8') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5))) (Product 53605 (Var 'c_m2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev9') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 1.5))))",
+     "eval_multipoles": "0",
+     "form_locals": "(Sum (Product 3092893 (Var 'c_p2l') (Power (Sum (Var 'p_fmm_lev4') 1) 2)) (Product 12339492 (Var 'c_p2l') (Power (Sum (Var 'p_fmm_lev5') 1) 2)) (Product 82817161 (Var 'c_p2l') (Power (Sum (Var 'p_fmm_lev6') 1) 2)) (Product 168041574 (Var 'c_p2l') (Power (Sum (Var 'p_fmm_lev7') 1) 2)) (Product 16383505 (Var 'c_p2l') (Power (Sum (Var 'p_fmm_lev8') 1) 2)))",
+     "refine_locals": "(Sum (Product 2 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev0') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev0') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev1') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev1') 1) 2) 1.5))) (Product 8 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev1') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev1') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev2') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 1.5))) (Product 32 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev2') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev3') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 1.5))) (Product 216 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev3') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev4') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5))) (Product 1089 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev5') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5))) (Product 5265 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev6') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5))) (Product 23538 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev7') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5))) (Product 77581 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev8') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5))) (Product 2312 (Var 'c_l2l') (Sum (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 0.5) (Power (Sum (Var 'p_fmm_lev9') 1) 2)) (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 1.5))))",
+     "eval_locals": "0",
+     "eval_target_specific_qbx_locals_list1": "(Product 4149864332 (Var 'c_p2p_tsqbx') (Power (Power (Sum (Var 'p_qbx') 1) 2) 0.5))",
+     "eval_target_specific_qbx_locals_list3": "(Product 12189995696 (Var 'c_p2p_tsqbx') (Power (Power (Sum (Var 'p_qbx') 1) 2) 0.5))",
+     "eval_target_specific_qbx_locals_list4": "(Product 5160103282 (Var 'c_p2p_tsqbx') (Power (Power (Sum (Var 'p_qbx') 1) 2) 0.5))",
+     "translate_box_multipoles_to_qbx_local": "(Sum (Product 57280 (Var 'c_m2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 823302 (Var 'c_m2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 5374486 (Var 'c_m2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 22061049 (Var 'c_m2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 1067364 (Var 'c_m2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev9') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))))",
+     "translate_box_local_to_qbx_local": "(Sum (Product 1249 (Var 'c_l2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev4') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 6410 (Var 'c_l2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev5') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 57842 (Var 'c_l2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev6') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 337568 (Var 'c_l2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev7') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))) (Product 316931 (Var 'c_l2qbxl') (Sum (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 1.5) (Product (Power (Power (Sum (Var 'p_fmm_lev8') 1) 2) 0.5) (Power (Sum (Var 'p_qbx') 1) 2)) (Power (Power (Sum (Var 'p_qbx') 1) 2) 1.5))))",
+     "eval_qbx_expansions": "(Product 720000 (Var 'c_qbxl2p') (Power (Sum (Var 'p_qbx') 1) 2))"
+    }
+   }
+  }
+ }
+]
