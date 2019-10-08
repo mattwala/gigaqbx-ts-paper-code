@@ -1,0 +1,15 @@
+.PHONY: all clean
+
+OUTDIR := summary
+
+all: $(OUTDIR)/summary.pdf
+
+DATA := $(wildcard out/*.pdf out/*.tex)
+
+export TEXINPUTS := $(TEXINPUTS):out:
+
+$(OUTDIR)/summary.pdf: summary.tex $(DATA)
+	latexrun -O $(OUTDIR) $< -o $ $@
+
+clean:
+	rm -rf $(OUTDIR)
