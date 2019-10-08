@@ -30,6 +30,7 @@ import pyopencl as cl
 import pyopencl.clmath  # noqa
 import gzip
 import pickle
+import pytest
 from pytools import Record
 
 from functools import partial
@@ -40,7 +41,7 @@ from meshmode.discretization.visualization import make_visualizer
 from pytential import bind, sym
 from pytential.qbx import QBXTargetAssociationFailedException
 from pytential.qbx.performance import PerformanceModel
-from experiments import DEFAULT_LPOT_KWARGS as _EXPERIMENTS_DEFAULT_LPOT_KWARGS
+from pyopencl.tools import pytest_generate_tests_for_pyopencl as pytest_generate_tests  # noqa
 
 
 import logging
@@ -248,7 +249,7 @@ class BetterplaneIntEqTestCase(IntEqTestCase):
 
 def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
     mesh = case.get_mesh(resolution, case.target_order)
-    print("%d elements" % mesh.nelements)
+    logger.info("%d elements" % mesh.nelements)
 
     from pytential.qbx import QBXLayerPotentialSource
     from meshmode.discretization import Discretization
@@ -299,14 +300,14 @@ def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
         if hasattr(case, "refinement_maxiter"):
             refiner_extra_kwargs["maxiter"] = case.refinement_maxiter
 
-        print("%d elements before refinement" % pre_density_discr.mesh.nelements)
+        logger.info("%d elements before refinement" % pre_density_discr.mesh.nelements)
         qbx, _ = qbx.with_refinement(**refiner_extra_kwargs)
 
-        print("%d stage-1 elements after refinement"
+        logger.info("%d stage-1 elements after refinement"
                 % qbx.density_discr.mesh.nelements)
-        print("%d stage-2 elements after refinement"
+        logger.info("%d stage-2 elements after refinement"
                 % qbx.stage2_density_discr.mesh.nelements)
-        print("quad stage-2 elements have %d nodes"
+        logger.info("quad stage-2 elements have %d nodes"
                 % qbx.quad_stage2_density_discr.groups[0].nunit_nodes)
 
     return qbx
@@ -486,7 +487,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
             ])
         raise
 
-    print("gmres state:", gmres_result.state)
+    logger.info("gmres state:", gmres_result.state)
     weighted_u = gmres_result.solution
 
     # }}}
@@ -522,7 +523,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
 
         # }}}
 
-        print("rel_err_2: %g rel_err_inf: %g" % (rel_err_2, rel_err_inf))
+        logger.info("rel_err_2: %g rel_err_inf: %g" % (rel_err_2, rel_err_inf))
 
     else:
         rel_err_2 = None
@@ -537,7 +538,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
                     map_potentials=lambda pot: sym.grad(mesh.ambient_dim, pot),
                     qbx_forced_limit=None))
 
-        #print(bound_t_deriv_op.code)
+        #logger.info(bound_t_deriv_op.code)
 
         grad_from_src = bound_grad_op(
                 queue, u=weighted_u, **concrete_knl_kwargs)
@@ -555,7 +556,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
                 /
                 la.norm(grad_ref[0].get(), np.inf))
 
-        print("rel_grad_err_inf: %g" % rel_grad_err_inf)
+        logger.info("rel_grad_err_inf: %g" % rel_grad_err_inf)
 
     # }}}
 
@@ -568,7 +569,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
                     map_potentials=lambda pot: sym.tangential_derivative(2, pot),
                     qbx_forced_limit=loc_sign))
 
-        #print(bound_t_deriv_op.code)
+        #logger.info(bound_t_deriv_op.code)
 
         tang_deriv_from_src = bound_t_deriv_op(
                 queue, u=weighted_u, **concrete_knl_kwargs).as_scalar().get()
@@ -588,7 +589,7 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
 
         rel_td_err_inf = la.norm(td_err, np.inf)/la.norm(tang_deriv_ref, np.inf)
 
-        print("rel_td_err_inf: %g" % rel_td_err_inf)
+        logger.info("rel_td_err_inf: %g" % rel_td_err_inf)
 
     else:
         rel_td_err_inf = None
@@ -695,12 +696,18 @@ def run_int_eq_test(cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None
 
 # {{{ test frontend
 
+SphereHelmholtzDirichletTest = SphereIntEqTestCase(20, "dirichlet", +1)
+
+
+@pytest.mark.parametrize(
+        "case",
+        (SphereHelmholtzDirichletTest,))
 def test_integral_equation(ctx_getter, case, visualize=False):
     cl_ctx = ctx_getter()
     queue = cl.CommandQueue(cl_ctx)
 
     from pytools.convergence import EOCRecorder
-    print("qbx_order: %d, %s" % (case.qbx_order, case))
+    logger.info("qbx_order: %d, %s" % (case.qbx_order, case))
 
     eoc_rec_target = EOCRecorder()
     eoc_rec_td = EOCRecorder()
@@ -725,13 +732,13 @@ def test_integral_equation(ctx_getter, case, visualize=False):
         assert False
 
     if have_error_data:
-        print("TARGET ERROR:")
-        print(eoc_rec_target)
+        logger.info("TARGET ERROR:")
+        logger.info(eoc_rec_target)
         assert eoc_rec_target.order_estimate() > tgt_order - 1.3
 
         if case.check_tangential_deriv:
-            print("TANGENTIAL DERIVATIVE ERROR:")
-            print(eoc_rec_td)
+            logger.info("TANGENTIAL DERIVATIVE ERROR:")
+            logger.info(eoc_rec_td)
             assert eoc_rec_td.order_estimate() > tgt_order - 2.3
 
 # }}}
@@ -752,92 +759,6 @@ def sphere_lpot_source(queue, lpot_kwargs):
 
 
 if __name__ == "__main__":
-    import multiprocessing
-
-    # Avoid issues with fork()-based multiprocessing and pyopencl - see
-    # https://github.com/inducer/pyopencl/issues/156
-    multiprocessing.set_start_method("spawn")
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    if 0:
-        # Test solver for sphere.
-        c = cl._csc(0)
-        q = cl.CommandQueue(c)
-        run_int_eq_test(c, q, SphereIntEqTestCase(4, "dirichlet", +1), 1, 1)
-
-    if 0:
-        # Green test for plane.
-        from experiments import get_green_error
-        lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-
-        print(get_green_error(
-            plane_lpot_source, lpot_kwargs, center=np.array([3, 6, 2]), k=0,
-            vis_error_filename="error.vtk", vis_order=2))
-
-    if 0:
-        # Automated tuning for plane.
-        from experiments import automated_experiments
-
-        lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-
-        plane = plane_lpot_source
-        automated_experiments(
-                [plane], [plane], plane, "plane",
-                lpot_kwargs=lpot_kwargs,
-                base_nmax_range=range(50, 200, 50),
-                base_nmpole_range=range(10, 100, 10),
-                tsqbx_nmax_range=range(100, 500, 50),
-                tsqbx_nmpole_range=range(50, 300, 50),
-                which_op="D",
-                helmholtz_k=20,
-                only_collect_params=True)
-
-    if 0:
-        # Time a single DLP for the plane.
-        """
-        Values obtained from automated experiments:
-
-        baseline nmax: 100
-        baseline nmpole: 40
-        ts nmax: 300
-        ts nmpole: 150
-        """
-
-        from experiments import get_lpot_cost
-
-        lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-
-        lpot_kwargs["_use_target_specific_qbx"] = False
-        lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = 40
-        lpot_kwargs["_max_leaf_refine_weight"] = 100
-        cost_baseline = get_lpot_cost("D", 20, plane_lpot_source, lpot_kwargs, "both")
-        with open("plane-cost-baseline.pkl", "wb") as outf:
-            pickle.dump(cost_baseline, outf)
-
-        lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = 150
-        lpot_kwargs["_max_leaf_refine_weight"] = 300
-        lpot_kwargs["_use_target_specific_qbx"] = True
-        cost_ts = get_lpot_cost("D", 20, plane_lpot_source, lpot_kwargs, "both")
-        with open("plane-cost-ts.pkl", "wb") as outf:
-            pickle.dump(cost_ts, outf)
-
-    if 1:
-        # Plane inteq test.
-        lpot_kwargs = DEFAULT_LPOT_KWARGS.copy()
-        lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = 150
-        lpot_kwargs["_max_leaf_refine_weight"] = 300
-        lpot_kwargs["_use_target_specific_qbx"] = True
-
-        ctx = cl.create_some_context(False)
-        queue = cl.CommandQueue(ctx)
-        run_int_eq_test(
-                ctx,
-                queue,
-                BetterplaneIntEqTestCase(20, "dirichlet", +1),
-                0.25,
-                1,
-                lpot_kwargs)
-        
-
-# vim: fdm=marker
+    logging.basicConfig(level=logging.INFO)
+    test_integral_equation(cl._csc, SphereHelmholtzDirichletTest)
+    #pytest.main([__file__])
