@@ -4,7 +4,7 @@ OUTDIR := summary
 
 all: $(OUTDIR)/summary.pdf
 
-DATA := $(wildcard out/*.pdf out/*.tex)
+DATA := $(wildcard out/*.pgf out/*.tex)
 
 export TEXINPUTS := $(TEXINPUTS):out:
 
