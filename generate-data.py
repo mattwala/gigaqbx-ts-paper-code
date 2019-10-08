@@ -867,6 +867,15 @@ def run_plane_tuning_study_experiment():
             which_op="D", helmholtz_k=20)
 
 
+def run_plane_optimization_study_experiment():
+    tuning_params = load_params("tuning-params-plane.json")
+    plane = [plane_geometry_getter()]
+
+    run_optimization_study(
+            plane, "plane", plane_lpot_kwargs(),
+            tuning_params, "D", helmholtz_k=20)
+
+
 def run_experiments(experiments):
     # Time prediction
     if "urchin-time-prediction" in experiments:
@@ -899,6 +908,10 @@ def run_experiments(experiments):
     # Plane tuning study
     if "plane-tuning-study" in experiments:
         run_plane_tuning_study_experiment()
+
+    # Plane tuning study
+    if "plane-optimization-study" in experiments:
+        run_plane_optimization_study_experiment()
 
 
 EXPERIMENTS = (
