@@ -898,7 +898,7 @@ def run_plane_bvp_experiment():
     result = run_int_eq_test(
             cl_ctx,
             queue,
-            BetterplaneIntEqTestCase(20, "dirichlet", +1)
+            BetterplaneIntEqTestCase(20, "dirichlet", +1),
             resolution=0.25,
             visualize=True,
             lpot_kwargs=lpot_kwargs,
