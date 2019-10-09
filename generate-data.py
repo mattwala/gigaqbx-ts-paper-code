@@ -8,6 +8,8 @@ import json
 import utils
 import os
 import argparse
+import gzip
+import pickle
 
 from functools import partial  # noqa: F401
 from meshmode.mesh.generation import (  # noqa
@@ -183,6 +185,7 @@ def plane_geometry_getter(label="plane"):
 
 PARAMS_DIR = "params"
 OUTPUT_DIR = "raw-data"
+BVP_OUTPUT_DIR = "raw-data-bvp"
 
 
 def make_output_file(filename, **flags):
@@ -876,6 +879,53 @@ def run_plane_optimization_study_experiment():
             tuning_params, "D", helmholtz_k=20)
 
 
+def run_plane_bvp_experiment():
+    lpot_kwargs = plane_lpot_kwargs()
+
+    tuning_params = load_params("tuning-params-plane.json")
+    lpot_kwargs["_use_target_specific_qbx"] = True
+    lpot_kwargs["_max_leaf_refine_weight"] = (
+            tuning_params["tsqbx_nmax"])
+    lpot_kwargs["_from_sep_smaller_min_nsources_cumul"] = (
+            tuning_params["tsqbx_nmpole"])
+
+    cl_ctx = cl.create_some_context(interactive=False)
+    queue = cl.CommandQueue(cl_ctx)
+
+    from inteq_tests import (
+            run_int_eq_test, BetterplaneIntEqTestCase,
+            SphereHelmholtzDirichletTestCase)
+
+    result = run_int_eq_test(
+            cl_ctx,
+            queue,
+            #BetterplaneIntEqTestCase(20, "dirichlet", +1)
+            #resolution=0.25,
+            SphereHelmholtzDirichletTestCase,
+            resolution=1,
+            visualize=True,
+            lpot_kwargs=lpot_kwargs,
+            output_dir=BVP_OUTPUT_DIR)
+
+    gmres_result = result.gmres_result
+
+    result_dict = dict(
+            h_max=result.h_max,
+            rel_err_2=result.rel_err_2,
+            rel_err_inf=result.rel_err_inf,
+            rel_td_err_inf=result.rel_td_err_inf,
+            gmres_result=dict(
+                solution=gmres_result.solution.get(queue),
+                residual_norms=gmres_result.residual_norms,
+                iteration_count=gmres_result.iteration_count,
+                success=gmres_result.success,
+                stat=gmres_result.state))
+
+    with gzip.open(os.path.join(BVP_OUTPUT_DIR, "result.pkl.gz"), "wb")\
+            as outfile:
+        pickle.dump(result_dict, outfile)
+
+
 def run_experiments(experiments):
     # Time prediction
     if "urchin-time-prediction" in experiments:
@@ -913,6 +963,10 @@ def run_experiments(experiments):
     if "plane-optimization-study" in experiments:
         run_plane_optimization_study_experiment()
 
+    # Plane BVP
+    if "plane-bvp" in experiments:
+        run_plane_bvp_experiment()
+
 
 EXPERIMENTS = (
         "urchin-time-prediction",
@@ -926,7 +980,7 @@ EXPERIMENTS = (
 
         "plane-tuning-study",
         "plane-optimization-study",
-        "plane-bvp-error",
+        "plane-bvp",
 )
 
 

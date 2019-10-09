@@ -31,6 +31,7 @@ import numpy.linalg as la
 import pyopencl as cl
 import pyopencl.clmath  # noqa
 import gzip
+import os
 import pickle
 import pytest
 from pytools import Record
@@ -331,10 +332,17 @@ def lpot_source_from_case(cl_ctx, queue, case, resolution, base_lpot_kwargs):
 # {{{ test backend
 
 def run_int_eq_test(
-        cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None):
+        cl_ctx, queue, case, resolution, visualize, lpot_kwargs=None,
+        output_dir=None):
     if lpot_kwargs is None:
         lpot_kwargs = {}
     qbx = lpot_source_from_case(cl_ctx, queue, case, resolution, lpot_kwargs)
+
+    def output_file_path(fname):
+        if output_dir is not None:
+            os.makedirs(output_dir, exist_ok=True)
+            return os.path.join(output_dir, fname)
+        return fname
 
     density_discr = qbx.density_discr
     mesh = density_discr.mesh
@@ -347,9 +355,9 @@ def run_int_eq_test(
                 )(queue).as_vector(dtype=object)
 
         bdry_vis = make_visualizer(queue, density_discr, case.target_order)
-        bdry_vis.write_vtk_file("geometry.vtu", [
-            ("normals", bdry_normals)
-            ])
+        bdry_vis.write_vtk_file(output_file_path("geometry.vtu"), [
+                ("normals", bdry_normals)
+                ])
 
     # {{{ plot geometry
 
@@ -375,9 +383,9 @@ def run_int_eq_test(
                     bind(density_discr, sym.normal(3))(queue)
                     ).as_vector(dtype=object)
 
-            bdry_vis.write_vtk_file("pre-solve-source-%s.vtu" % resolution, [
-                ("bdry_normals", bdry_normals),
-                ])
+            bdry_vis.write_vtk_file(
+                    output_file_path("pre-solve-source-%s.vtu" % resolution),
+                    [("bdry_normals", bdry_normals),])
 
         else:
             raise ValueError("invalid mesh dim")
@@ -460,8 +468,8 @@ def run_int_eq_test(
     point_source = PointPotentialSource(cl_ctx, point_sources)
 
     pot_src = sym.IntG(
-        # FIXME: qbx_forced_limit--really?
-        knl, sym.var("charges"), qbx_forced_limit=None, **knl_kwargs)
+            # FIXME: qbx_forced_limit--really?
+            knl, sym.var("charges"), qbx_forced_limit=None, **knl_kwargs)
 
     test_direct = bind((point_source, PointsTarget(test_targets)), pot_src)(
             queue, charges=source_charges_dev, **concrete_knl_kwargs)
@@ -496,10 +504,9 @@ def run_int_eq_test(
                 stall_iterations=50, no_progress_factor=1.05)
     except QBXTargetAssociationFailedException as e:
         bdry_vis = make_visualizer(queue, density_discr, case.target_order+3)
-
-        bdry_vis.write_vtk_file("failed-targets-%s.vtu" % resolution, [
-            ("failed_targets", e.failed_target_flags),
-            ])
+        bdry_vis.write_vtk_file(
+                output_file_path("failed-targets-%s.vtu" % resolution),
+                [("failed_targets", e.failed_target_flags),])
         raise
 
     logger.info("gmres state: %s", gmres_result.state)
@@ -629,11 +636,13 @@ def run_int_eq_test(
         sym_sqrt_j = sym.sqrt_jac_q_weight(density_discr.ambient_dim)
         u = bind(density_discr, sym.var("u")/sym_sqrt_j)(queue, u=weighted_u)
 
-        bdry_vis.write_vtk_file("source-%s.vtu" % resolution, [
-            ("u", u),
-            ("bc", bc),
-            # ("bdry_normals", bdry_normals),
-            ])
+        bdry_vis.write_vtk_file(
+                output_file_path("source-%s.vtu" % resolution),
+                [
+                    ("u", u),
+                    ("bc", bc),
+                    # ("bdry_normals", bdry_normals),
+                    ])
 
         from sumpy.visualization import make_field_plotter_from_bbox  # noqa
         from meshmode.mesh.processing import find_bounding_box
@@ -660,7 +669,7 @@ def run_int_eq_test(
                     )(queue, u=weighted_u, k=case.k)
         except QBXTargetAssociationFailedException as e:
             fplot.write_vtk_file(
-                    "failed-targets.vts",
+                    output_file_path("failed-targets.vts"),
                     [
                         ("failed_targets", e.failed_target_flags.get(queue))
                         ])
@@ -686,7 +695,7 @@ def run_int_eq_test(
         # fplot.show_scalar_in_mayavi(solved_pot.real, max_val=5)
         if case.prob_side == "scat":
             fplot.write_vtk_file(
-                    "potential-%s.vts" % resolution,
+                    output_file_path("potential-%s.vts" % resolution),
                     [
                         ("pot_scattered", solved_pot),
                         ("pot_incoming", -true_pot),
@@ -695,7 +704,7 @@ def run_int_eq_test(
                     )
         else:
             fplot.write_vtk_file(
-                    "potential-%s.vts" % resolution,
+                    output_file_path("potential-%s.vts" % resolution),
                     [
                         ("solved_pot", solved_pot),
                         ("true_pot", true_pot),
@@ -720,12 +729,12 @@ def run_int_eq_test(
 
 # {{{ test frontend
 
-SphereHelmholtzDirichletTest = SphereIntEqTestCase(5, "dirichlet", +1)
+SphereHelmholtzDirichletTestCase = SphereIntEqTestCase(5, "dirichlet", +1)
 
 
 @pytest.mark.parametrize(
         "case",
-        (SphereHelmholtzDirichletTest,))
+        (SphereHelmholtzDirichletTestCase,))
 def test_integral_equation(ctx_getter, case, visualize=False):
     cl_ctx = ctx_getter()
     queue = cl.CommandQueue(cl_ctx)
