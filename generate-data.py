@@ -893,16 +893,13 @@ def run_plane_bvp_experiment():
     queue = cl.CommandQueue(cl_ctx)
 
     from inteq_tests import (
-            run_int_eq_test, BetterplaneIntEqTestCase,
-            SphereHelmholtzDirichletTestCase)
+            run_int_eq_test, BetterplaneIntEqTestCase)
 
     result = run_int_eq_test(
             cl_ctx,
             queue,
-            #BetterplaneIntEqTestCase(20, "dirichlet", +1)
-            #resolution=0.25,
-            SphereHelmholtzDirichletTestCase,
-            resolution=1,
+            BetterplaneIntEqTestCase(20, "dirichlet", +1)
+            resolution=0.25,
             visualize=True,
             lpot_kwargs=lpot_kwargs,
             output_dir=BVP_OUTPUT_DIR)
