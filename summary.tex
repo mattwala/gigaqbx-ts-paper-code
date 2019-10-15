@@ -31,8 +31,15 @@
 }
 
 \newcommand{\cellcenter}[1]{\multicolumn{1}{c}{#1}}
-\renewrobustcmd{\bfseries}{\fontseries{b}\selectfont}
 \newcommand{\converged}[1]{\bfseries #1}
+\newenvironment{resultstable}
+               {
+                 \begin{table}
+                   \renewrobustcmd{\bfseries}{\fontseries{b}\selectfont}
+               }
+               {
+                 \end{table}
+               }
 
 \begin{document}
 
@@ -40,17 +47,17 @@
 \listoftables
 \listoffigures
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Actual versus predicted process times for urchin geometries, c.f.\ Table~3.}
   \input{urchin-time-prediction.tex}
-\end{table}
+\end{resultstable}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Balanced FMM parameters for urchin geometry $\gamma_6$, c.f.\ Sec~4.2.2.}
   \input{tuning-params-urchin.tex}
-\end{table}
+\end{resultstable}
 
 \begin{figure}
   \centering
@@ -70,23 +77,23 @@
   \caption{Impact of $\nmax$ on urchin modeled process time, c.f.\ Fig.~8.}
 \end{figure}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Summary of impact of optimizations on urchin geometries, c.f.\ Sec.~4.2.2.}
   \input{optimization-summary-urchin.tex}  
-\end{table}
+\end{resultstable}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Green error on urchin geometries, c.f.\ Sec.~4.2.2.}
   \input{green-error-urchin.tex}  
-\end{table}
+\end{resultstable}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Balanced FMM parameters for torus grid geometry, c.f.\ Sec~4.2.3.}
   \input{tuning-params-donut.tex}
-\end{table}
+\end{resultstable}
 
 \begin{figure}
   \centering
@@ -94,23 +101,23 @@
   \caption{Torus grid optimization sequence, c.f.\ Fig.~9.}
 \end{figure}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Summary of impact of optimizations on torus grid geometry, c.f.\ Sec.~4.2.3.}
   \input{optimization-summary-donut.tex}  
-\end{table}
+\end{resultstable}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Green error on torus grid geometry, c.f.\ Sec.~4.2.3.}
   \input{green-error-donut.tex}  
-\end{table}
+\end{resultstable}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Balanced FMM parameters for plane geometry, c.f.\ Sec~4.3.}
   \input{tuning-params-plane.tex}
-\end{table}
+\end{resultstable}
 
 \begin{figure}
   \centering
@@ -118,10 +125,10 @@
   \caption{plane optimization sequence, c.f.\ Fig.~11.}
 \end{figure}
 
-\begin{table}
+\begin{resultstable}
   \centering
   \caption{Summary of impact of optimizations on plane geometry, c.f.\ Sec.~4.3.}
   \input{optimization-summary-plane.tex}  
-\end{table}
+\end{resultstable}
 
 \end{document}
