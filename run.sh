@@ -3,18 +3,18 @@
 # Find platform
 if [ "$(uname)" = Darwin ] && [ "$(uname -m)" = x86_64 ]
 then
-    MINICONDA_INSTALL_SH=Miniconda2-4.7.10-MacOSX-x86_64.sh
+    MINICONDA_INSTALL_SH=Miniconda3-4.7.10-MacOSX-x86_64.sh
     SPEC_FILE=env/osx-64-spec.txt
 elif [ "$(uname)" = Linux ] && [ "$(uname -m)" = x86_64 ]
 then
-    MINICONDA_INSTALL_SH=Miniconda2-4.7.10-Linux-x86_64.sh
+    MINICONDA_INSTALL_SH=Miniconda3-4.7.10-Linux-x86_64.sh
     SPEC_FILE=env/linux-64-spec.txt
 else
     echo Unsupported platform.
     exit 1
 fi
 
-MINICONDA_INSTALL_DIR=.miniconda2
+MINICONDA_INSTALL_DIR=.miniconda3
 
 if [ -d $MINICONDA_INSTALL_DIR ] && [ -d src ]
 then
