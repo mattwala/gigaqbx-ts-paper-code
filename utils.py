@@ -23,8 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+import argparse
 import collections
 import enum
+import fnmatch
 import json
 import numpy as np
 import pyopencl as cl
@@ -353,6 +355,67 @@ def test_pymbolic_sexprs():
     check_error("(Sum (Sum 1 2) 3")
     check_error("(Error)")
     check_error("Sum")
+
+
+# {{{ parse args
+
+def parse_args(description, experiments):
+    names = ["  - '%s'" % name for name in experiments]
+    epilog = "\n".join(["experiment names:"] + names)
+
+    parser = argparse.ArgumentParser(
+            description=description,
+            epilog=epilog,
+            formatter_class=argparse.RawDescriptionHelpFormatter)
+
+    parser.add_argument(
+            "-x",
+            metavar="experiment-name",
+            action="append",
+            dest="experiments",
+            default=[],
+            help="Adds an experiment to the list to be run "
+                 "(accepts wildcards) (may be given multiple times)")
+
+    parser.add_argument(
+            "--all",
+            action="store_true",
+            dest="run_all",
+            help="Runs all experiments")
+
+    parser.add_argument(
+            "--except",
+            action="append",
+            metavar="experiment-name",
+            dest="run_except",
+            default=[],
+            help="Removes an experiment from the list to be run "
+                 "(accepts wildcards) (may be given multiple times)")
+
+    parse_result = parser.parse_args()
+
+    result = set()
+
+    if parse_result.run_all:
+        result = set(experiments)
+
+    for experiment in experiments:
+        for pat in parse_result.experiments:
+            if fnmatch.fnmatch(experiment, pat):
+                result.add(experiment)
+                continue
+
+    to_discard = set()
+    for experiment in experiments:
+        for pat in parse_result.run_except:
+            if fnmatch.fnmatch(experiment, pat):
+                to_discard.add(experiment)
+                continue
+    result -= to_discard
+
+    return result
+
+# }}}
 
 
 if __name__ == "__main__":

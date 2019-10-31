@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Gather experimental data"""
-import fnmatch
 import numpy as np  # noqa
 import numpy.linalg as la  # noqa
 import pyopencl as cl  # noqa
@@ -8,7 +7,6 @@ import pyopencl.clmath  # noqa
 import json
 import utils
 import os
-import argparse
 import gzip
 import pickle
 
@@ -1108,61 +1106,8 @@ EXPERIMENTS = (
 
 
 def main():
-    names = ["'%s'" % name for name in EXPERIMENTS]
-    names[-1] = "and " + names[-1]
-
-    description = (
-            "This script collects data from one or more experiments. "
-            " The names of the experiments are: " + ", ".join(names)
-            + ".")
-
-    parser = argparse.ArgumentParser(description=description)
-
-    parser.add_argument(
-            "-x",
-            metavar="experiment-name",
-            action="append",
-            dest="experiments",
-            default=[],
-            help="Run an experiment "
-                 "(accepts globs) (may be specified multiple times)")
-
-    parser.add_argument(
-            "--all",
-            action="store_true",
-            dest="run_all",
-            help="Run all available experiments")
-
-    parser.add_argument(
-            "--except",
-            action="append",
-            metavar="experiment-name",
-            dest="run_except",
-            default=[],
-            help="Do not run an experiment "
-                 "(accepts globs) (may be specified multiple times)")
-
-    result = parser.parse_args()
-
-    experiments = set()
-
-    if result.run_all:
-        experiments = set(EXPERIMENTS)
-
-    for experiment in EXPERIMENTS:
-        for pat in result.experiments:
-            if fnmatch.fnmatch(experiment, pat):
-                experiments.add(experiment)
-                continue
-
-    to_discard = set()
-    for experiment in experiments:
-        for pat in result.run_except:
-            if fnmatch.fnmatch(experiment, pat):
-                to_discard.add(experiment)
-                continue
-    experiments -= to_discard
-
+    description = "This script collects data from one or more experiments."
+    experiments = utils.parse_args(description, EXPERIMENTS)
     run_experiments(experiments)
 
 

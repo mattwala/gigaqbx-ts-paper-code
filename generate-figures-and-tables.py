@@ -4,8 +4,6 @@ import matplotlib
 import numpy as np  # noqa
 
 import os
-import fnmatch
-import argparse
 import io
 import json
 import utils
@@ -1086,61 +1084,9 @@ def gen_figures_and_tables(experiments):
 
 
 def main():
-    names = ["'%s'" % name for name in EXPERIMENTS]
-    names[-1] = "and " + names[-1]
-
     description = (
-            "This script postprocesses results for one or more experiments. "
-            " The names of the experiments are: " + ", ".join(names)
-            + ".")
-
-    parser = argparse.ArgumentParser(description=description)
-
-    parser.add_argument(
-            "-x",
-            metavar="experiment-name",
-            action="append",
-            dest="experiments",
-            default=[],
-            help="Postprocess results for an experiment "
-                 "(accepts globs) (may be specified multiple times)")
-
-    parser.add_argument(
-            "--all",
-            action="store_true",
-            dest="run_all",
-            help="Postprocess results for all available experiments")
-
-    parser.add_argument(
-            "--except",
-            action="append",
-            metavar="experiment-name",
-            dest="run_except",
-            default=[],
-            help="Do not postprocess results for an experiment "
-                 "(accepts globs) (may be specified multiple times)")
-
-    result = parser.parse_args()
-
-    experiments = set()
-
-    if result.run_all:
-        experiments = set(EXPERIMENTS)
-
-    for experiment in EXPERIMENTS:
-        for pat in result.experiments:
-            if fnmatch.fnmatch(experiment, pat):
-                experiments.add(experiment)
-                continue
-
-    to_discard = set()
-    for experiment in EXPERIMENTS:
-        for pat in result.run_except:
-            if fnmatch.fnmatch(experiment, pat):
-                to_discard.add(experiment)
-                continue
-    experiments -= to_discard
-
+            "This script postprocesses results for one or more experiments.")
+    experiments = utils.parse_args(description, EXPERIMENTS)
     gen_figures_and_tables(experiments)
 
 
