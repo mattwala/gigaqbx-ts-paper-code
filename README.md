@@ -1,7 +1,7 @@
-# Numerical experiments: Optimization of fast algorithms for Quadruature by Expansion using target-specific expansions
+# Numerical experiments: Optimization of fast algorithms for Quadrature by Expansion using target-specific expansions
 
 This repository contains the code for numerical experiments in the
-paper 'Optimization of fast algorithms for Quadruature by Expansion
+paper 'Optimization of fast algorithms for Quadrature by Expansion
 using target-specific expansions,' available at
 [doi:10.1016/j.jcp.2019.108976](https://doi.org/10.1016/j.jcp.2019.108976)
 or on [arXiv](https://arxiv.org/abs/1811.01110).
@@ -35,9 +35,9 @@ This script re-runs experiments, and generates an output file
 data.
 
 This script doesn't run the plane BVP experiment from Section 4.3,
-which takes quite a bit of time to run (See
+which takes quite a bit of time to run. See
 [below](#running-experiments) for how to run this experiment and
-others individually.) If you are using the Docker image, data from
+others individually. If you are using the Docker image, data from
 that experiment is already saved in the `raw-data-bvp` directory. This
 script also doesn't run the experiment to regenerate the calibration
 parameters for the various geometries, as doing so would likely cause
@@ -50,16 +50,15 @@ Two options are available for installation.
 ### Docker Image
 
 The simplest way to install is to use the [Docker
-image](https://doi.org/10.5281/zenodo.3523410). The code and
-software are installed in the image directory
+image](https://doi.org/10.5281/zenodo.3523410). The code,
+software, and saved results are installed in the image directory
 `/home/inteq/gigaqbx-ts-results`.
 
 Note that the version of GCC and the compiler flags used for the
 software in the Docker image differ from the version used in the paper
 as described in Section 4.1. This does not affect any of the results,
-but will affect the calibration parameters if those are regenerated
-(by default, calibration parameters matching those used to obtain the
-data in the paper are used).
+but will affect the calibration parameters in the `params` directory
+if those are regenerated.
 
 ### Manual Installation
 
@@ -98,7 +97,7 @@ to run individual experiments or groups of experiments, and postprocess
 experimental outputs, respectively. Pass the `--help` option for more
 documentation and the list of available experiments.
 
-The `params`, `raw-data` and `raw-data-bvp` directories are written to
+The `params`, `raw-data`, and `raw-data-bvp` directories are written to
 by `generate-data.py` and hold experimental outputs and computed
 parameters. The `out` directory contains generated figures and tables
 and is written to by `generate-figures-and-tables.py`.
