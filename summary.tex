@@ -49,7 +49,13 @@
 
 \begin{resultstable}
   \centering
-  \caption{Actual versus predicted process times for urchin geometries, c.f.\ Table~3.}
+  \caption{Urchin calibration parameters, c.f.\ Table~3.}
+  \input{urchin-calibration-params.tex}
+\end{resultstable}
+
+\begin{resultstable}
+  \centering
+  \caption{Actual versus predicted process times for urchin geometries, c.f.\ Table~4.}
   \input{urchin-time-prediction.tex}
 \end{resultstable}
 
@@ -80,13 +86,19 @@
 \begin{resultstable}
   \centering
   \caption{Summary of impact of optimizations on urchin geometries, c.f.\ Sec.~4.2.2.}
-  \input{optimization-summary-urchin.tex}  
+  \input{optimization-summary-urchin.tex}
 \end{resultstable}
 
 \begin{resultstable}
   \centering
   \caption{Green error on urchin geometries, c.f.\ Sec.~4.2.2.}
-  \input{green-error-urchin.tex}  
+  \input{green-error-urchin.tex}
+\end{resultstable}
+
+\begin{resultstable}
+  \centering
+  \caption{Torus grid calibration parameters.}
+  \input{donut-calibration-params.tex}
 \end{resultstable}
 
 \begin{resultstable}
@@ -104,13 +116,19 @@
 \begin{resultstable}
   \centering
   \caption{Summary of impact of optimizations on torus grid geometry, c.f.\ Sec.~4.2.3.}
-  \input{optimization-summary-donut.tex}  
+  \input{optimization-summary-donut.tex}
 \end{resultstable}
 
 \begin{resultstable}
   \centering
   \caption{Green error on torus grid geometry, c.f.\ Sec.~4.2.3.}
-  \input{green-error-donut.tex}  
+  \input{green-error-donut.tex}
+\end{resultstable}
+
+\begin{resultstable}
+  \centering
+  \caption{Plane calibration parameters.}
+  \input{plane-calibration-params.tex}
 \end{resultstable}
 
 \begin{resultstable}
@@ -122,13 +140,13 @@
 \begin{figure}
   \centering
   \input{timing-plane.pgf}
-  \caption{plane optimization sequence, c.f.\ Fig.~11.}
+  \caption{Plane optimization sequence, c.f.\ Fig.~11.}
 \end{figure}
 
 \begin{resultstable}
   \centering
   \caption{Summary of impact of optimizations on plane geometry, c.f.\ Sec.~4.3.}
-  \input{optimization-summary-plane.tex}  
+  \input{optimization-summary-plane.tex}
 \end{resultstable}
 
 \end{document}

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Gather experimental data"""
+import fnmatch
 import numpy as np  # noqa
 import numpy.linalg as la  # noqa
 import pyopencl as cl  # noqa
@@ -773,6 +774,66 @@ def plane_lpot_kwargs():
 # }}}
 
 
+# {{{ fit calibration params
+
+def fit_calibration_params(geometry_getters, lpot_kwargs_list, which_op, helmholtz_k):
+    """Find calibration parameters for running a layer potential operator
+    on a particular list of geometries.
+
+    Params:
+        geometry_getters: A list of geometry getters
+        lpot_kwargs_list: A list of corresponding lpot kwargs
+        which_op: "S" or "D"
+        helmholtz_k: Helmholtz parameter
+
+    Returns:
+        The calibration parameters as a dictionary.
+    """
+    context = cl.create_some_context(interactive=False)
+    queue = cl.CommandQueue(context)
+
+    from pytential.qbx.performance import (
+            PerformanceModel, estimate_calibration_params)
+
+    model_results = []
+    timing_results = []
+
+    for geo_getter, lpot_kwargs in zip(geometry_getters, lpot_kwargs_list):
+        model_result = get_lpot_cost(which_op, helmholtz_k,
+            geo_getter, lpot_kwargs, "model")
+        model_results.append(model_result)
+        timing_result = get_lpot_cost(which_op, helmholtz_k,
+            geo_getter, lpot_kwargs, "actual")
+        timing_results.append(timing_result)
+
+    return estimate_calibration_params(model_results, timing_results)
+
+# }}}
+
+
+def run_urchin_calibration_params_experiment():
+    urchins = (
+            urchin_geometry_getter(3),
+            urchin_geometry_getter(3),
+            urchin_geometry_getter(5),
+            urchin_geometry_getter(5))
+
+    lpot_kwargs_nots = urchin_lpot_kwargs()
+    lpot_kwargs_ts = lpot_kwargs_nots.copy()
+    lpot_kwargs_ts["_use_target_specific_qbx"] = True
+
+    lpot_kwargs_list = (
+            lpot_kwargs_nots,
+            lpot_kwargs_ts,
+            lpot_kwargs_nots,
+            lpot_kwargs_ts)
+
+    result = fit_calibration_params(urchins, lpot_kwargs_list, "S", 0)
+
+    with make_params_file("calibration-params-urchin.json") as outfile:
+        output_data(result, outfile)
+
+
 def run_urchin_time_prediction_experiment():
     urchins = [urchin_geometry_getter(k) for k in URCHIN_PARAMS]
 
@@ -819,6 +880,26 @@ def run_urchin_green_error_experiment():
         output_data(results, outfile)
 
 
+def run_donut_calibration_params_experiment():
+    # nrows=5 is the same as tau_{10}
+    donuts = (
+            donut_geometry_getter(5, "donut"),
+            donut_geometry_getter(5, "donut"))
+
+    lpot_kwargs_nots = donut_lpot_kwargs()
+    lpot_kwargs_ts = lpot_kwargs_nots.copy()
+    lpot_kwargs_ts["_use_target_specific_qbx"] = True
+
+    lpot_kwargs_list = (
+            lpot_kwargs_nots,
+            lpot_kwargs_ts)
+
+    result = fit_calibration_params(donuts, lpot_kwargs_list, "S", 0)
+
+    with make_params_file("calibration-params-donut.json") as outfile:
+        output_data(result, outfile)
+
+
 def run_donut_tuning_study_experiment():
     # nrows=5 is the same as tau_{10}
     tuning_donut = donut_geometry_getter(5, "donut")
@@ -853,6 +934,25 @@ def run_donut_green_error_experiment():
 
     with make_output_file("green-error-donut.json") as outfile:
         output_data(results, outfile)
+
+
+def run_plane_calibration_params_experiment():
+    planes = (
+            plane_geometry_getter(),
+            plane_geometry_getter())
+
+    lpot_kwargs_nots = plane_lpot_kwargs()
+    lpot_kwargs_ts = lpot_kwargs_nots.copy()
+    lpot_kwargs_ts["_use_target_specific_qbx"] = True
+
+    lpot_kwargs_list = (
+            lpot_kwargs_nots,
+            lpot_kwargs_ts)
+
+    result = fit_calibration_params(planes, lpot_kwargs_list, "D", 20)
+
+    with make_params_file("calibration-params-plane.json") as outfile:
+        output_data(result, outfile)
 
 
 def run_plane_tuning_study_experiment():
@@ -924,6 +1024,10 @@ def run_plane_bvp_experiment():
 
 
 def run_experiments(experiments):
+    # Urchin calibration params
+    if "urchin-calibration-params" in experiments:
+        run_urchin_calibration_params_experiment()
+
     # Time prediction
     if "urchin-time-prediction" in experiments:
         run_urchin_time_prediction_experiment()
@@ -940,6 +1044,10 @@ def run_experiments(experiments):
     if "urchin-green-error" in experiments:
         run_urchin_green_error_experiment()
 
+    # Torus grid calibration params
+    if "donut-calibration-params" in experiments:
+        run_donut_calibration_params_experiment()
+
     # Optimization study for torus grid
     if "donut-optimization-study" in experiments:
         run_donut_optimization_study_experiment()
@@ -951,6 +1059,10 @@ def run_experiments(experiments):
     # Green error for torus grid
     if "donut-green-error" in experiments:
         run_donut_green_error_experiment()
+
+    # Plane calibration params
+    if "plane-calibration-params" in experiments:
+        run_plane_calibration_params_experiment()
 
     # Plane tuning study
     if "plane-tuning-study" in experiments:
@@ -966,15 +1078,18 @@ def run_experiments(experiments):
 
 
 EXPERIMENTS = (
+        "urchin-calibration-params",
         "urchin-time-prediction",
         "urchin-tuning-study",
         "urchin-optimization-study",
         "urchin-green-error",
 
+        "donut-calibration-params",
         "donut-tuning-study",
         "donut-optimization-study",
         "donut-green-error",
 
+        "plane-calibration-params",
         "plane-tuning-study",
         "plane-optimization-study",
         "plane-bvp",
@@ -998,7 +1113,8 @@ def main():
             action="append",
             dest="experiments",
             default=[],
-            help="Run an experiment (may be specified multiple times)")
+            help="Run an experiment "
+                 "(accepts globs) (may be specified multiple times)")
 
     parser.add_argument(
             "--all",
@@ -1012,7 +1128,8 @@ def main():
             metavar="experiment-name",
             dest="run_except",
             default=[],
-            help="Do not run an experiment (may be specified multiple times)")
+            help="Do not run an experiment "
+                 "(accepts globs) (may be specified multiple times)")
 
     result = parser.parse_args()
 
@@ -1020,8 +1137,20 @@ def main():
 
     if result.run_all:
         experiments = set(EXPERIMENTS)
-    experiments |= set(result.experiments)
-    experiments -= set(result.run_except)
+
+    for experiment in EXPERIMENTS:
+        for pat in result.experiments:
+            if fnmatch.fnmatch(experiment, pat):
+                experiments.add(experiment)
+                continue
+
+    to_discard = set()
+    for experiment in experiments:
+        for pat in result.run_except:
+            if fnmatch.fnmatch(experiment, pat):
+                to_discard.add(experiment)
+                continue
+    experiments -= to_discard
 
     run_experiments(experiments)
 

@@ -4,7 +4,9 @@ import matplotlib
 import numpy as np  # noqa
 
 import os
+import fnmatch
 import argparse
+import io
 import json
 import utils
 import logging
@@ -81,23 +83,29 @@ def read_data(infile):
     return json.load(infile, cls=utils.CostResultDecoder)
 
 
-def print_table(table, headers, outf_name, column_formats=None):
-    with open_output_file(outf_name) as outfile:
-        def my_print(s):
-            print(s, file=outfile)
-        my_print(r"\begin{tabular}{%s}" % column_formats)
-        my_print(r"\toprule")
-        if isinstance(headers[0], (list, tuple)):
-            for header_row in headers:
-                my_print(" & ".join(header_row) + r"\\")
-        else:
-            my_print(" & ".join(headers) + r"\\")
-        my_print(r"\midrule")
-        for row in table:
-            my_print(" & ".join(row) + r"\\")
-        my_print(r"\bottomrule")
-        my_print(r"\end{tabular}")
-    logger.info("Wrote %s", os.path.join(OUTPUT_DIR, outf_name))
+def print_table(table, headers, outf, column_formats=None):
+    if isinstance(outf, str):
+        outfile = open_output_file(outf)
+    else:
+        outfile = outf
+
+    def my_print(s):
+        print(s, file=outfile)
+    my_print(r"\begin{tabular}{%s}" % column_formats)
+    my_print(r"\toprule")
+    if isinstance(headers[0], (list, tuple)):
+        for header_row in headers:
+            my_print(" & ".join(header_row) + r"\\")
+    else:
+        my_print(" & ".join(headers) + r"\\")
+    my_print(r"\midrule")
+    for row in table:
+        my_print(" & ".join(row) + r"\\")
+    my_print(r"\bottomrule")
+    my_print(r"\end{tabular}")
+
+    if isinstance(outf, str):
+        logger.info("Wrote %s", os.path.join(OUTPUT_DIR, outf))
 
 # }}}
 
@@ -588,19 +596,66 @@ def balancing_graph(results, xlabel, name, labeling, title=None):
 
 
 EXPERIMENTS = (
+        "urchin-calibration-params",
         "urchin-time-prediction",
         "urchin-tuning-study",
         "urchin-optimization-study",
         "urchin-green-error",
 
+        "donut-calibration-params",
         "donut-tuning-study",
         "donut-optimization-study",
         "donut-green-error",
 
+        "plane-calibration-params",
         "plane-tuning-study",
         "plane-optimization-study",
         "plane-bvp-error",
 )
+
+
+# {{{ calibration params table
+
+def generate_calibration_params_table(params, label):
+    headers = ("Constant", "Value")
+
+    def row(name, display_name=None):
+        if display_name is None:
+            display_name = name
+        letter, subscript = display_name.split("_")
+        mant, exp = ("%.2e" % params[name]).split("e")
+        exp = int(exp)
+        return (
+                fr"${letter}_\text{{{subscript}}}$",
+                fr"${mant} \times 10^{{{exp}}}$")
+
+    rows_left = (
+            row("c_p2l"),
+            row("c_p2m"),
+            row("c_p2qbxl"),
+            row("c_p2p_tsqbx", "c_ts"),
+            row("c_l2l"))
+
+    rows_right = (
+            row("c_l2qbxl"),
+            row("c_m2l"),
+            row("c_m2m"),
+            row("c_m2qbxl"),
+            row("c_qbxl2p"))
+
+    outfile = io.StringIO()
+    print_table(rows_left, headers, outfile, "lc")
+    outfile.write("\\quad\n")
+    print_table(rows_right, headers, outfile, "lc")
+
+    outf_name = f"{label}-calibration-params.tex"
+
+    with open_output_file(outf_name) as outf:
+        outf.write(outfile.getvalue())
+
+    logger.info("Wrote %s", os.path.join(OUTPUT_DIR, outf_name))
+
+# }}}
 
 
 # {{{ tuning study table
@@ -695,6 +750,15 @@ def generate_optimization_summary_table(labels, optimizations, name):
                             for reductions in cost_reductions_by_row]))
 
     print_table(rows, headers, f"optimization-summary-{name}.tex", "lrrrr")
+
+# }}}
+
+
+# {{{ urchin calibration params
+
+def generate_urchin_calibration_params_table():
+    params = load_params("calibration-params-urchin.json")
+    generate_calibration_params_table(params, "urchin")
 
 # }}}
 
@@ -849,11 +913,20 @@ def generate_urchin_optimization_study_outputs():
 
 def generate_urchin_green_error_table():
     labels = [fr"$\gamma_{{{i}}}$" for i in range(2, 11, 2)]
-    
+
     with open_data_file("green-error-urchin.json") as inf:
         errors = [item["error"] for item in read_data(inf)]
 
     generate_green_error_table(labels, errors, "urchin")
+
+# }}}
+
+
+# {{{ donut calibration params
+
+def generate_donut_calibration_params_table():
+    params = load_params("calibration-params-donut.json")
+    generate_calibration_params_table(params, "donut")
 
 # }}}
 
@@ -919,6 +992,15 @@ def generate_donut_green_error_table():
 # }}}
 
 
+# {{{ plane calibration params
+
+def generate_plane_calibration_params_table():
+    params = load_params("calibration-params-plane.json")
+    generate_calibration_params_table(params, "plane")
+
+# }}}
+
+
 # {{{ plane tuning study
 
 def generate_plane_tuning_study_table():
@@ -967,6 +1049,9 @@ def generate_plane_optimization_study_outputs():
 
 
 def gen_figures_and_tables(experiments):
+    if "urchin-calibration-params" in experiments:
+        generate_urchin_calibration_params_table()
+
     if "urchin-time-prediction" in experiments:
         generate_urchin_time_prediction_table()
 
@@ -979,6 +1064,9 @@ def gen_figures_and_tables(experiments):
     if "urchin-green-error" in experiments:
         generate_urchin_green_error_table()
 
+    if "donut-calibration-params" in experiments:
+        generate_donut_calibration_params_table()
+
     if "donut-tuning-study" in experiments:
         generate_donut_tuning_study_table()
 
@@ -987,6 +1075,9 @@ def gen_figures_and_tables(experiments):
 
     if "donut-green-error" in experiments:
         generate_donut_green_error_table()
+
+    if "plane-calibration-params" in experiments:
+        generate_plane_calibration_params_table()
 
     if "plane-tuning-study" in experiments:
         generate_plane_tuning_study_table()
@@ -1013,7 +1104,7 @@ def main():
             dest="experiments",
             default=[],
             help="Postprocess results for an experiment "
-                 "(may be specified multiple times)")
+                 "(accepts globs) (may be specified multiple times)")
 
     parser.add_argument(
             "--all",
@@ -1028,7 +1119,7 @@ def main():
             dest="run_except",
             default=[],
             help="Do not postprocess results for an experiment "
-                 "(may be specified multiple times)")
+                 "(accepts globs) (may be specified multiple times)")
 
     result = parser.parse_args()
 
@@ -1036,8 +1127,20 @@ def main():
 
     if result.run_all:
         experiments = set(EXPERIMENTS)
-    experiments |= set(result.experiments)
-    experiments -= set(result.run_except)
+
+    for experiment in EXPERIMENTS:
+        for pat in result.experiments:
+            if fnmatch.fnmatch(experiment, pat):
+                experiments.add(experiment)
+                continue
+
+    to_discard = set()
+    for experiment in EXPERIMENTS:
+        for pat in result.run_except:
+            if fnmatch.fnmatch(experiment, pat):
+                to_discard.add(experiment)
+                continue
+    experiments -= to_discard
 
     gen_figures_and_tables(experiments)
 
