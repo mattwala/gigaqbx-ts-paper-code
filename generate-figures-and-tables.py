@@ -595,25 +595,6 @@ def balancing_graph(results, xlabel, name, labeling, title=None):
 # }}}
 
 
-EXPERIMENTS = (
-        "urchin-calibration-params",
-        "urchin-time-prediction",
-        "urchin-tuning-study",
-        "urchin-optimization-study",
-        "urchin-green-error",
-
-        "donut-calibration-params",
-        "donut-tuning-study",
-        "donut-optimization-study",
-        "donut-green-error",
-
-        "plane-calibration-params",
-        "plane-tuning-study",
-        "plane-optimization-study",
-        "plane-bvp-error",
-)
-
-
 # {{{ calibration params table
 
 def generate_calibration_params_table(params, label):
@@ -1046,6 +1027,24 @@ def generate_plane_optimization_study_outputs():
     generate_optimization_summary_table(labels, [o0, o1, o2, o3], name="plane")
 
 # }}}
+
+
+EXPERIMENTS = (
+        "urchin-calibration-params",
+        "urchin-time-prediction",
+        "urchin-tuning-study",
+        "urchin-optimization-study",
+        "urchin-green-error",
+
+        "donut-calibration-params",
+        "donut-tuning-study",
+        "donut-optimization-study",
+        "donut-green-error",
+
+        "plane-calibration-params",
+        "plane-tuning-study",
+        "plane-optimization-study",
+)
 
 
 def gen_figures_and_tables(experiments):
