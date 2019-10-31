@@ -206,6 +206,8 @@ def load_params(filename, **flags):
 
 def output_data(obj, outfile):
     json.dump(obj, outfile, cls=utils.CostResultEncoder, indent=1)
+    if hasattr(outfile, "name"):
+        logger.info("Wrote '%s'", outfile.name)
 
 # }}}
 
