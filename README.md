@@ -1,50 +1,47 @@
-# Numerical experiments: A fast algorithm with error bounds for Quadrature by Expansion
+# Numerical experiments: Optimization of fast algorithms for Quadruature by Expansion using target-specific expansions
 
-This repository contains the code for numerical experiments in the paper 'A fast
-algorithm with error bounds for Quadrature by Expansion,' available at
-[doi:10.1016/j.jcp.2018.05.006](https://doi.org/10.1016/j.jcp.2018.05.006) or on
-[arXiv](https://arxiv.org/abs/1801.04070).
+This repository contains the code for numerical experiments in the
+paper 'Optimization of fast algorithms for Quadruature by Expansion
+using target-specific expansions,' available at
+[doi:10.1016/j.jcp.2019.108976](https://doi.org/10.1016/j.jcp.2019.108976)
+or on [arXiv](https://arxiv.org/abs/1811.01110).
 
 The code that is included reproduces the experiments in Section 4 of
 the paper, including:
 
-* Data presented in Sections 4.2.2 and 4.2.3
-* Figures 6, 7, 8, 9, 10, 11
+* Tables 3 and 4;
+* Data presented in Sections 4.2.2, 4.2.3, and 4.3; and
+* Figures 6, 7, 8, 9, 10, and 11.
+
+There's also a Jupyter notebook for numerically verifying the
+identities in Appendix A.
 
 ## Running Everything
 
-**Important**: A machine with a large amount of memory is required for
+**Important:** A machine with a large amount of memory is required for
 some experiments. This issue is currently being
 [investigated](https://gitlab.tiker.net/inducer/pytential/issues/137). We
 have tested these successfully on a 20-core 2.30 GHz Intel Xeon
 E5-2650 v3 machine with 256 GB of RAM.
 
-Install the [Docker image](#docker-image), and from a shell running in a
-container, go to the code directory and type:
+To run almost everything, install the [Docker image](#docker-image),
+and from a shell running in a container, go to the code directory and
+type:
 ```
 ./run.sh
 ```
-This script re-runs (almost all) experiments, and generates an output file
-`summary/summary.pdf` containing (almost all) generated figures, tables, and
+This script re-runs experiments, and generates an output file
+`summary/summary.pdf` containing generated figures, tables, and
 data.
 
 This script doesn't run the plane BVP experiment from Section 4.3,
-which takes quite a bit of time to run. In order to run that along
-with the other experiments, set the environment variable `RUN_PLANE`
-to `1` first:
-```
-RUN_PLANE=1 ./run.sh
-```
-Data from a run of this experiment is already saved in the
-`raw-data-bvp` directory. Setting RUN_PLANE=1 overwrites the files
-that are already there.
-
-Processing the output of the plane BVP experiment requires Paraview
-(not installed). The file `plane-workflow.pvsm` is the saved Paraview
-state to generate Figure 10. This was tested with Paraview X.X.X.
-
-It's also possible to have more selective control over what gets run. See
-[below](#running-experiments).
+which takes quite a bit of time to run (See
+[below](#running-experiments) for how to run this experiment and
+others individually.) If you are using the Docker image, data from
+that experiment is already saved in the `raw-data-bvp` directory. This
+script also doesn't run the experiment to regenerate the calibration
+parameters for the various geometries, as doing so would likely cause
+the results to differ.
 
 ## Installation Hints
 
@@ -52,10 +49,17 @@ Two options are available for installation.
 
 ### Docker Image
 
-The simplest way to install is to use the
-[Docker image](http://dx.doi.org/10.5281/zenodo.3483367). The code
-and software are installed in the image directory
+The simplest way to install is to use the [Docker
+image](https://doi.org/10.5281/zenodo.3523410). The code and
+software are installed in the image directory
 `/home/inteq/gigaqbx-ts-results`.
+
+Note that the version of GCC and the compiler flags used for the
+software in the Docker image differ from the version used in the paper
+as described in Section 4.1. This does not affect any of the results,
+but will affect the calibration parameters if those are regenerated
+(by default, calibration parameters matching those used to obtain the
+data in the paper are used).
 
 ### Manual Installation
 
@@ -79,9 +83,9 @@ source .miniconda3/bin/activate inteq
 export PYOPENCL_TEST=portable
 ```
 
-To ensure that everything works, you can run a short test:
+To ensure that everything works, you can run a few short tests:
 ```
-py.test --disable-warnings utils.py
+py.test --disable-warnings utils.py inteq_tests.py
 ```
 
 A more extensive set of tests can be found in the Pytential test suite (included
@@ -94,25 +98,27 @@ to run individual experiments or groups of experiments, and postprocess
 experimental outputs, respectively. Pass the `--help` option for more
 documentation and the list of available experiments.
 
-The `raw-data` directory is written to by `generate-data.py` and holds
-experimental outputs. The `out` directory contains generated figures and tables
+The `params`, `raw-data` and `raw-data-bvp` directories are written to
+by `generate-data.py` and hold experimental outputs and computed
+parameters. The `out` directory contains generated figures and tables
 and is written to by `generate-figures-and-tables.py`.
 
 To regenerate all outputs from the data that is already in the `raw-data`
 directory, run
-
 ```
 ./generate-figures-and-tables.py --all
 make -f makefile.summary
 ```
 
+Figure 10, unlike the rest of the figures, is generated using Paraview
+(which is not installed by the installation script). The provided file
+`plane-workflow.pvsm` was tested on Paraview 5.5.2.
+
 To run an individual experiment or to regenerate the data for a single
 experiments, supply the command line option `-x experiment-name`. For instance, to
-regenerate the results for the `bvp` experiment, run
-
+regenerate the results for the `plane-bvp` experiment, run
 ```
-./generate-data.py -x bvp
-./generate-figures-and-tables.py -x bvp
+./generate-data.py -x plane-bvp
 ```
 
 ## Contents
@@ -125,29 +131,21 @@ generated:
 | `Dockerfile` | Used for generating the Docker image |
 | `README.md` | This file |
 | `install.sh` | Installation script |
-| `generate-data.py` | Script for running experiments. Puts output in the `raw-data` directory |
+| `generate-data.py` | Script for running experiments |
 | `generate-figures-and-tables.py` | Script for postprocessing experiments and producing figures and tables. Puts output in the `out` directory |
 | `makefile.summary` | Makefile for generating the summary PDF |
 | `utils.py` | Extra code used by `generate-data.py` |
+| `inteq_tests.py` | Integral equation code used by `generate-data.py` |
 | `summary.tex` | Source code for summary PDF |
 | `run.sh` | Script for re-running all experiments and generating all outputs |
 | `env` | Files used by the installer to set up the Conda and pip environments |
 | `.miniconda3` | Conda install directory |
 | `src` | Pip install directory |
+| `params` | Holds parameters for experiments |
 | `raw-data` | Holds data generated by experiments |
+| `raw-data-bvp` | Holds data generated by the plane BVP experiment in Section 4.3 |
 | `out` | Holds generated figures and tables |
 | `summary` | Holds generated summary PDF and auxiliary files |
-
-## Citations
-
-```
-@article{gigaqbxts,
-  title = "A fast algorithm with error bounds for {Quadrature} by {Expansion}",
-  journal = "Journal of Computational Physics",
-  volume = "374",
-  pages = "135 - 162",
-  year = "2018",
-  doi = "10.1016/j.jcp.2018.05.006",
-  author = "Matt Wala and Andreas Klöckner",
-}
-```
+| `plane-mesh.pkl.gz` | Saved mesh file for the plane geometry in Section 4.3 |
+| `plane-workflow.pvsm` | Paraview state for generating Figure 10 |
+| `Expansion Identities.ipynb` | Jupyter notebook for identities in Appendix A |
