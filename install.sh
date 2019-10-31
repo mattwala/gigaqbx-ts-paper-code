@@ -7,6 +7,7 @@ if [ "$(uname)" = Darwin ] && [ "$(uname -m)" = x86_64 ]
 then
     MINICONDA_INSTALL_SH=Miniconda3-4.7.10-MacOSX-x86_64.sh
     SPEC_FILE=env/osx-64-spec.txt
+    export CC=clang
 elif [ "$(uname)" = Linux ] && [ "$(uname -m)" = x86_64 ]
 then
     MINICONDA_INSTALL_SH=Miniconda3-4.7.10-Linux-x86_64.sh
