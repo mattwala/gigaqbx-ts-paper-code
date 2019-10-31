@@ -980,6 +980,15 @@ def run_plane_optimization_study_experiment():
 
 
 def run_plane_bvp_experiment():
+    if any(
+            os.path.exists(os.path.join(BVP_OUTPUT_DIR, fname))
+            for fname in (
+                "potential-0.25.vts", "result.pkl.gz", "source-0.25.vtu")):
+        raise RuntimeError(
+                "not running plane-bvp experiment - delete or move "
+                "the output files in "
+                "the directory '%s' to run" % BVP_OUTPUT_DIR)
+
     lpot_kwargs = plane_lpot_kwargs()
 
     tuning_params = load_params("tuning-params-plane.json")
