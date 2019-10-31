@@ -644,9 +644,9 @@ def generate_calibration_params_table(params, label):
             row("c_qbxl2p"))
 
     outfile = io.StringIO()
-    print_table(rows_left, headers, outfile, "lc")
+    print_table(rows_left, headers, outfile, "ll")
     outfile.write("\\quad\n")
-    print_table(rows_right, headers, outfile, "lc")
+    print_table(rows_right, headers, outfile, "ll")
 
     outf_name = f"{label}-calibration-params.tex"
 
