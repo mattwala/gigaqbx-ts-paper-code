@@ -14,4 +14,5 @@ py.test --disable-warnings utils.py inteq_tests.py
 
 # Run code
 nice ./generate-data.py --all --except '*-calibration-params' --except plane-bvp
+./generate-figures-and-tables.py --all
 make -f makefile.summary
