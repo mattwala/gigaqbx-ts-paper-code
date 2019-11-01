@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Serialization utilities and tests"""
+"""Miscellaneous utilities and tests"""
 
 __copyright__ = "Copyright (C) 2019 Matt Wala"
 
