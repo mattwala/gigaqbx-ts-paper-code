@@ -1,0 +1,6 @@
+__pycache__/
+out/
+src/
+summary/
+.miniconda3/
+Miniconda3-*-x86_64.sh
