@@ -32,6 +32,7 @@ LINEWIDTH = 0.5
 def initialize_matplotlib():
     plt.rc("font", family="serif")
     plt.rc("text", usetex=True)
+    plt.rc("pgf", texsystem="pdflatex")
     plt.rc("pgf", preamble=[
             r"\usepackage{amsmath}",
             r"\providecommand{\pqbx}{p_{\text{QBX}}}",
