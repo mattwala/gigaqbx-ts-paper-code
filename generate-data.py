@@ -787,7 +787,8 @@ def fit_calibration_params(geometry_getters, lpot_kwargs_list, which_op, helmhol
         helmholtz_k: Helmholtz parameter
 
     Returns:
-        The calibration parameters as a dictionary.
+        A dictionary containing keys *model_results*, *timing_results*
+        and *calibration_params*.
     """
     context = cl.create_some_context(interactive=False)
     queue = cl.CommandQueue(context)
@@ -806,7 +807,13 @@ def fit_calibration_params(geometry_getters, lpot_kwargs_list, which_op, helmhol
             geo_getter, lpot_kwargs, "actual")
         timing_results.append(timing_result)
 
-    return estimate_calibration_params(model_results, timing_results)
+    result = {}
+    result["model_results"] = model_results
+    result["timing_results"] = timing_results
+    result["calibration_params"] = (
+            estimate_calibration_params(model_results, timing_results))
+
+    return result
 
 # }}}
 
@@ -830,8 +837,11 @@ def run_urchin_calibration_params_experiment():
 
     result = fit_calibration_params(urchins, lpot_kwargs_list, "S", 0)
 
-    with make_params_file("calibration-params-urchin.json") as outfile:
+    with make_output_file("calibration-params-fitting-urchin.json") as outfile:
         output_data(result, outfile)
+
+    with make_params_file("calibration-params-urchin.json") as outfile:
+        output_data(result["calibration_params"], outfile)
 
 
 def run_urchin_time_prediction_experiment():
@@ -896,8 +906,11 @@ def run_donut_calibration_params_experiment():
 
     result = fit_calibration_params(donuts, lpot_kwargs_list, "S", 0)
 
-    with make_params_file("calibration-params-donut.json") as outfile:
+    with make_output_file("calibration-params-fitting-donut.json") as outfile:
         output_data(result, outfile)
+
+    with make_params_file("calibration-params-donut.json") as outfile:
+        output_data(result["calibration_params"], outfile)
 
 
 def run_donut_tuning_study_experiment():
@@ -951,8 +964,11 @@ def run_plane_calibration_params_experiment():
 
     result = fit_calibration_params(planes, lpot_kwargs_list, "D", 20)
 
-    with make_params_file("calibration-params-plane.json") as outfile:
+    with make_output_file("calibration-params-fitting-plane.json") as outfile:
         output_data(result, outfile)
+
+    with make_params_file("calibration-params-plane.json") as outfile:
+        output_data(result["calibration_params"], outfile)
 
 
 def run_plane_tuning_study_experiment():
