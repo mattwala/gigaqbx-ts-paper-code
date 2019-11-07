@@ -25,7 +25,7 @@ have tested these successfully on a 20-core 2.30 GHz Intel Xeon
 E5-2650 v3 machine with 256 GB of RAM.
 
 To run almost everything, install the [Docker image](#docker-image),
-and from a shell running in a container, go to the code directory and
+and from a shell running in a container, ensure you are in the code directory and
 type:
 ```
 ./run.sh
@@ -38,7 +38,7 @@ For ease of reference, the original paper data, saved in JSON format, is
 included in this repository and is overwitten when running `./run.sh` (but
 trivially recoverable through git). If you just want to postprocess the saved
 data to generate tables and figures, which takes much less time than re-running
-all the experiments, see [below](#running-experiments)
+all the experiments, see [below](#running-experiments).
 
 `./run.sh` doesn't run the plane BVP experiment from Section 4.3,
 which takes quite a bit of time to run. See
