@@ -357,9 +357,9 @@ def test_pymbolic_sexprs():
     check_error("Sum")
 
 
-# {{{ parse args
+# {{{ parse experiments from command line
 
-def parse_args(description, experiments):
+def parse_experiments_from_command_line(description, experiments):
     names = ["  - '%s'" % name for name in experiments]
     epilog = "\n".join(["experiment names:"] + names)
 

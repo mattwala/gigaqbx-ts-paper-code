@@ -1087,7 +1087,8 @@ def gen_figures_and_tables(experiments):
 def main():
     description = (
             "This script postprocesses results for one or more experiments.")
-    experiments = utils.parse_args(description, EXPERIMENTS)
+    experiments = utils.parse_experiments_from_command_line(
+            description, EXPERIMENTS)
     gen_figures_and_tables(experiments)
 
 

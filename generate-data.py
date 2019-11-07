@@ -1123,7 +1123,8 @@ EXPERIMENTS = (
 
 def main():
     description = "This script collects data from one or more experiments."
-    experiments = utils.parse_args(description, EXPERIMENTS)
+    experiments = utils.parse_experiments_from_command_line(
+            description, EXPERIMENTS)
     run_experiments(experiments)
 
 
