@@ -137,6 +137,7 @@ generated:
 |----------------------------------|------------------------------------------------------------------------------------------------------------|
 | `Dockerfile` | Used for generating the Docker image |
 | `README.md` | This file |
+| `LICENSE` | License file for the code in this directory |
 | `install.sh` | Installation script |
 | `generate-data.py` | Script for running experiments |
 | `generate-figures-and-tables.py` | Script for postprocessing experiments and producing figures and tables. Puts output in the `out` directory |
