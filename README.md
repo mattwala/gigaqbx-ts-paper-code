@@ -34,11 +34,17 @@ This script re-runs experiments, and generates an output file
 `summary/summary.pdf` containing generated figures, tables, and
 data.
 
-This script doesn't run the plane BVP experiment from Section 4.3,
+For ease of reference, the original paper data, saved in JSON format, is
+included in this repository and is overwitten when running `./run.sh` (but
+trivially recoverable through git). If you just want to postprocess the saved
+data to generate tables and figures, which takes much less time than re-running
+all the experiments, see [below](#running-experiments)
+
+`./run.sh` doesn't run the plane BVP experiment from Section 4.3,
 which takes quite a bit of time to run. See
 [below](#running-experiments) for how to run this experiment and
 others individually. If you are using the Docker image, data from
-that experiment is already saved in the `raw-data-bvp` directory. This
+that experiment is already saved in the `raw-data-bvp` directory. The
 script also doesn't run the experiment to regenerate the calibration
 parameters for the various geometries, as doing so would likely cause
 the results to differ.
@@ -97,13 +103,15 @@ to run individual experiments or groups of experiments, and postprocess
 experimental outputs, respectively. Pass the `--help` option for more
 documentation and the list of available experiments.
 
-The `params`, `raw-data`, and `raw-data-bvp` directories are written to
-by `generate-data.py` and hold experimental outputs and computed
-parameters. The `out` directory contains generated figures and tables
-and is written to by `generate-figures-and-tables.py`.
+The `params`, `raw-data`, and `raw-data-bvp` directories are (over)written by
+`generate-data.py` and hold experimental outputs. Some experiments depend on
+others: the data in the `params` directory is written by a number of experiments
+and serves as the input parameters for other experiments. The `out` directory
+contains generated figures and tables and is written to by
+`generate-figures-and-tables.py`.
 
-To regenerate all outputs from the data that is already in the `raw-data`
-directory, run
+To regenerate all outputs from the data that is already in the `raw-data` and `params`
+directories, run
 ```
 ./generate-figures-and-tables.py --all
 make -f makefile.summary
