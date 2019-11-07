@@ -12,7 +12,11 @@ export PYOPENCL_TEST=portable
 # Run a simple test
 py.test --disable-warnings utils.py inteq_tests.py
 
-# Run code
+# Generate data
 nice ./generate-data.py --all --except '*-calibration-params' --except plane-bvp
+
+# Postprocess data
 ./generate-figures-and-tables.py --all
+
+# Build summary PDF
 make -f makefile.summary
