@@ -1,1 +1,0 @@
-plane-mesh.pkl.gz filter=lfs diff=lfs merge=lfs -text
