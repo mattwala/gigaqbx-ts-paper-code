@@ -26,7 +26,7 @@ some experiments. This issue is currently being
 have tested these successfully on a 20-core 2.30 GHz Intel Xeon
 E5-2650 v3 machine with 256 GB of RAM.
 
-To run almost everything, install the [Docker image](#docker-image),
+To run almost everything, install the [Docker image](https://doi.org/10.5281/zenodo.3523410),
 and from a shell running in a container, ensure you are in the code directory and
 type:
 ```
