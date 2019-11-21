@@ -1,9 +1,9 @@
-# Numerical experiments: Optimization of fast algorithms for Quadrature by Expansion using target-specific expansions
+# Numerical experiments: Optimization of fast algorithms for global Quadrature by Expansion using target-specific expansions
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3542253.svg)](https://doi.org/10.5281/zenodo.3542253)
 
 This repository contains the code for numerical experiments in the
-paper 'Optimization of fast algorithms for Quadrature by Expansion
+paper 'Optimization of fast algorithms for global Quadrature by Expansion
 using target-specific expansions,' available at
 [doi:10.1016/j.jcp.2019.108976](https://doi.org/10.1016/j.jcp.2019.108976)
 or on [arXiv](https://arxiv.org/abs/1811.01110).
