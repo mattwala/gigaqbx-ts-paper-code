@@ -159,3 +159,46 @@ generated:
 | `summary.tex` | Source code for summary PDF |
 | `summary` | Holds generated summary PDF and auxiliary files |
 | `utils.py` | Extra code used by `generate-data.py` |
+
+## Citations
+
+To cite the paper:
+```
+@article{gigaqbxts,
+  title = "Optimization of fast algorithms for global {Quadrature} by {Expansion} using target-specific expansions",
+  journal = "Journal of Computational Physics",
+  volume = "403",
+  pages = "108976",
+  year = "2020",
+  doi = "10.1016/j.jcp.2019.108976",
+  author = "Matt Wala and Andreas Klöckner",
+}
+```
+
+To cite the repository and/or Docker image:
+```
+@software{gigaqbxts_repo,
+  author       = {Matt Wala},
+  title        = {{mattwala/gigaqbx-ts-paper-code: Fixes for Zenodo
+                   image}},
+  month        = nov,
+  year         = 2019,
+  publisher    = {Zenodo},
+  version      = {1.0.1},
+  doi          = {10.5281/zenodo.3542253},
+  url          = {https://doi.org/10.5281/zenodo.3542253}
+  }
+
+@software{gigaqbxts_docker,
+  author       = {Matt Wala},
+  title        = {{Docker image: Optimization of fast algorithms for
+                   global Quadrature by Expansion using target-
+                   specific expansions}},
+  month        = nov,
+  year         = 2019,
+  publisher    = {Zenodo},
+  version      = {1.0.1},
+  doi          = {10.5281/zenodo.3523410},
+  url          = {https://doi.org/10.5281/zenodo.3523410}
+}
+```
