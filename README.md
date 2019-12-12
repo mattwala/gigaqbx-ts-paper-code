@@ -187,7 +187,7 @@ To cite the repository and/or Docker image:
   version      = {1.0.1},
   doi          = {10.5281/zenodo.3542253},
   url          = {https://doi.org/10.5281/zenodo.3542253}
-  }
+}
 
 @software{gigaqbxts_docker,
   author       = {Matt Wala},
