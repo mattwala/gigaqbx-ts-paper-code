@@ -124,7 +124,7 @@ Figure 10, unlike the rest of the figures, is generated using Paraview
 `plane-workflow.pvsm` was tested on Paraview 5.5.2.
 
 To run an individual experiment or to regenerate the data for a single
-experiments, supply the command line option `-x experiment-name`. For instance, to
+experiment, supply the command line option `-x experiment-name`. For instance, to
 regenerate the results for the `plane-bvp` experiment, run
 ```
 ./generate-data.py -x plane-bvp
